@@ -12,7 +12,6 @@ export function BackgroundImage({ className }: BackgroundImageProps) {
     currentImage,
     currentCategory,
     overlayOpacity,
-    blurIntensity,
     autoRefresh,
     refreshInterval,
     lastRefresh,

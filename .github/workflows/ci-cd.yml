@@ -8,12 +8,6 @@ on:
       - 'Dockerfile'
       - 'docker/**'
       - '.github/workflows/**'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'frontend/**'
-      - 'Dockerfile'
-      - 'docker/**'
 
 env:
   REGISTRY: ghcr.io
@@ -66,7 +60,7 @@ jobs:
         id: build
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./frontend
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}

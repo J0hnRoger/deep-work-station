@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { unsplashService, type UnsplashImage, type BackgroundCategory, BACKGROUND_CATEGORIES } from '@/services/unsplash'
+import { unsplashService, type UnsplashImage, 
+  type BackgroundCategory, BACKGROUND_CATEGORIES } from '../services/unsplash'
 
 export interface BackgroundState {
   // Current background

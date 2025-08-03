@@ -53,8 +53,6 @@ export function CommandPalette() {
   
   const {
     isPlaying,
-    volume,
-    eqPreset,
     play,
     pause: pauseAudio,
     next,
@@ -63,7 +61,7 @@ export function CommandPalette() {
     setEQPreset
   } = useAudioStore()
   
-  const { user: { commandPaletteKey } } = useSettingsStore()
+  const { } = useSettingsStore()
   
   const { refreshCurrentImage } = useBackgroundStore()
   

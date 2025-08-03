@@ -3,7 +3,7 @@ import { useTimerStore } from '@/store/timer-store'
 import { useSettingsStore } from '@/store/settings-store'
 
 export const useTimer = () => {
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<number | null>(null)
   const lastActiveRef = useRef<number>(Date.now())
   
   const {
@@ -13,7 +13,6 @@ export const useTimer = () => {
     isBreak,
     autoPauseInactive,
     inactiveThreshold,
-    updateCurrentTime,
     completeSession,
     pauseTimer
   } = useTimerStore()
@@ -53,7 +52,7 @@ export const useTimer = () => {
             }
           }
         }
-      }, 1000)
+      }, 1000) as unknown as number
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)

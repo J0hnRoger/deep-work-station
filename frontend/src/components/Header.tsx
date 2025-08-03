@@ -1,8 +1,8 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Headphones } from 'lucide-react'
-import { useAudioStore } from '@/store/audio-store'
-import { SettingsDialog } from '@/components/settings'
-import { cn } from '@/lib/utils'
+import { useAudioStore } from '../store/audio-store'
+import { SettingsDialog } from '../components/settings'
+import { cn } from '../lib/utils'
 
 interface HeaderProps {
   className?: string

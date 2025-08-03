@@ -5,15 +5,13 @@ import { useSettingsStore } from '@/store/settings-store'
 
 export const useHowlerAudio = () => {
   const howlRef = useRef<Howl | null>(null)
-  const updateIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const updateIntervalRef = useRef<number | null>(null)
   
   const {
     isPlaying,
     currentTrack,
     volume,
     eqPreset,
-    play,
-    pause: pauseAudio,
     next,
     updateCurrentTime,
     setDuration,
@@ -21,7 +19,7 @@ export const useHowlerAudio = () => {
     setError
   } = useAudioStore()
   
-  const { app: { enableNotifications } } = useSettingsStore()
+  const { } = useSettingsStore()
   
   // Progress update functions (defined early to avoid dependency issues)
   const stopProgressUpdates = useCallback(() => {
@@ -45,7 +43,7 @@ export const useHowlerAudio = () => {
           updateCurrentTime(currentTime)
         }
       }
-    }, 1000)
+    }, 1000) as unknown as number
   }, [updateCurrentTime])
   
   // Set global volume
@@ -87,7 +85,7 @@ export const useHowlerAudio = () => {
         setLoading(false)
       },
       
-      onloaderror: (id, error) => {
+      onloaderror: (_, error) => {
         console.error('Error loading track:', error)
         setError(`Failed to load track: ${currentTrack.title}`)
         setLoading(false)
@@ -115,7 +113,7 @@ export const useHowlerAudio = () => {
         next() // Auto-advance to next track
       },
       
-      onplayerror: (id, error) => {
+      onplayerror: (_, error) => {
         console.error('Playback error:', error)
         setError('Playback failed')
         

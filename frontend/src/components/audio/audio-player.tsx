@@ -25,7 +25,6 @@ export function AudioPlayer({ className }: AudioPlayerProps) {
     previous,
     setVolume,
     setEQPreset,
-    currentPlaylist
   } = useAudioStore()
   
   const { isReady, isLoaded, handleSeek, formatTime } = useHowlerAudio()

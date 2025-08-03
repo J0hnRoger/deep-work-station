@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { azureBlobService, type PlaylistFolder } from '@/services/azure-blob'
-import { useAudioStore, type Playlist, type AudioTrack } from '@/store/audio-store'
+import { useAudioStore, type Playlist } from '@/store/audio-store'
 
 export const usePlaylist = () => {
-  const { setPlaylist, addPlaylist, playlists } = useAudioStore()
+  const { setPlaylist } = useAudioStore()
   
   // Fetch playlists from Azure Blob Storage
   const {
@@ -56,7 +56,6 @@ export const usePlaylist = () => {
     })
     
     // Replace all playlists to avoid duplicates
-    const state = useAudioStore.getState()
     
     console.log('About to set playlists:', convertedPlaylists.map(p => ({ 
       name: p.name, 

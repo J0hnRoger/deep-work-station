@@ -1,0 +1,93 @@
+/* Base Theme Configuration for Deep Work Station */
+/* Dark theme optimized for focus and concentration */
+
+:root {
+  /* Geometric properties */
+  --radius: 0.625rem;
+  
+  /* Color palette - Dark theme as base */
+  --background: oklch(0.08 0 0);        /* Deep dark background */
+  --foreground: oklch(0.95 0 0);        /* High contrast text */
+  --card: oklch(0.12 0 0);              /* Slightly elevated surfaces */
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.12 0 0);
+  --popover-foreground: oklch(0.95 0 0);
+  
+  /* Primary accent - Focused blue for timers/controls */
+  --primary: oklch(0.6 0.2 240);        /* Focus blue */
+  --primary-foreground: oklch(0.95 0 0);
+  
+  /* Secondary surfaces */
+  --secondary: oklch(0.15 0 0);
+  --secondary-foreground: oklch(0.9 0 0);
+  --muted: oklch(0.15 0 0);
+  --muted-foreground: oklch(0.65 0 0);
+  --accent: oklch(0.15 0 0);
+  --accent-foreground: oklch(0.9 0 0);
+  
+  /* Feedback colors */
+  --destructive: oklch(0.65 0.2 15);    /* Error/stop actions */
+  --warning: oklch(0.7 0.15 60);        /* Warning states */
+  --success: oklch(0.6 0.15 140);       /* Success/complete */
+  
+  /* Interactive elements */
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 10%);
+  --ring: oklch(0.6 0.2 240 / 50%);     /* Focus rings */
+  
+  /* Audio player specific */
+  --audio-background: oklch(0.1 0 0);
+  --audio-controls: oklch(0.18 0 0);
+  --audio-accent: oklch(0.55 0.18 200);  /* Audio controls accent */
+  
+  /* Timer specific */
+  --timer-primary: oklch(0.75 0.15 180); /* Timer display */
+  --timer-background: oklch(0.06 0 0);   /* Timer background */
+  
+  /* Charts for future stats */
+  --chart-1: oklch(0.55 0.2 260);
+  --chart-2: oklch(0.6 0.15 160);
+  --chart-3: oklch(0.65 0.18 70);
+  --chart-4: oklch(0.5 0.2 300);
+  --chart-5: oklch(0.58 0.2 20);
+}
+
+/* Animation preferences for focus */
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --animation-duration: 200ms;
+    --animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --animation-duration: 0ms;
+    --animation-easing: linear;
+  }
+}
+
+/* Typography scale for focus app */
+:root {
+  --font-size-timer: clamp(3rem, 8vw, 8rem);
+  --font-size-heading: clamp(1.5rem, 4vw, 2.5rem);
+  --font-size-body: 1rem;
+  --font-size-small: 0.875rem;
+  --font-size-xs: 0.75rem;
+}
+
+/* Spacing scale */
+:root {
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+}
+
+/* Export for theme switching capability */
+.theme-base {
+  color-scheme: dark;
+}

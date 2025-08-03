@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/CodinCloud/deep-work-station.git
+    repoURL: https://github.com/j0hnroger/deep-work-station.git
     targetRevision: HEAD
     path: deploy/overlays/production
   destination:

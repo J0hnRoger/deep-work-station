@@ -18,6 +18,8 @@ spec:
       labels:
         app: deep-work-station
     spec:
+      imagePullSecrets:
+      - name: ghcr-secret
       containers:
       - name: frontend
         image: deep-work-station

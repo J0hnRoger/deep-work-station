@@ -15,8 +15,8 @@ patchesStrategicMerge:
 
 images:
   - name: deep-work-station
-    newName: ghcr.io/codincloud/deep-work-station
-    newTag: latest
+    newName: ghcr.io/j0hnroger/deep-work-station
+    newTag: main-75a6538
 
 commonLabels:
   environment: production

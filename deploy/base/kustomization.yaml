@@ -11,9 +11,10 @@ resources:
   - ingress.yaml
   - middleware.yaml
 
-commonLabels:
-  app: deep-work-station
-  version: v1
+labels:
+  - pairs:
+      app: deep-work-station
+      version: v1
 
 images:
   - name: deep-work-station

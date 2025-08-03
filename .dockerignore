@@ -1,0 +1,46 @@
+# Dependencies
+frontend/node_modules
+frontend/dist
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+frontend/coverage
+frontend/build
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.*
+
+# Kubernetes
+deploy/
+k8s/
+
+# CI/CD
+.github/
+
+# Temporary files
+*.tmp
+*.temp

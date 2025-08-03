@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: deep-work-station-staging
+
+namespace: deep-work-station
+
+resources:
+  - ../../base
+
+patchesStrategicMerge:
+  - deployment-patch.yaml
+  - ingress-patch.yaml
+
+images:
+  - name: deep-work-station
+    newName: ghcr.io/codincloud/deep-work-station
+    newTag: staging
+
+commonLabels:
+  environment: staging
+
+replicas:
+  - name: deep-work-station
+    count: 1

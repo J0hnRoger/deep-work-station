@@ -10,7 +10,7 @@ export const Route = createFileRoute('/')({
 
 function App() {
   return (
-    <div className="min-h-screen relative">
+    <div className="relative">
       {/* Dynamic Background */}
       <BackgroundImage />
       {/* Command Palette */}

@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 metadata:
-  name: deep-work-station-base
+  name: deep-work-station
 
 resources:
   - namespace.yaml
@@ -10,10 +10,9 @@ resources:
   - service.yaml
   - ingress.yaml
 
-labels:
-  - pairs:
-      app: deep-work-station
-      version: v1
+commonLabels:
+  app: deep-work-station
+  environment: production
 
 images:
   - name: deep-work-station

@@ -2,13 +2,19 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: deep-work-station
+  namespace: deep-work-station
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: "web,websecure"
+    traefik.ingress.kubernetes.io/redirect-scheme: "https"
 spec:
+  ingressClassName: traefik
   tls:
   - hosts:
-    - deepwork.your-domain.com
+    - deepwork.codincloud.net
     secretName: deep-work-station-tls
   rules:
-  - host: deepwork.your-domain.com
+  - host: deepwork.codincloud.net
     http:
       paths:
       - path: /

@@ -5,9 +5,9 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: ton-email@codincloud.net  # Remplace par ton email
+    email: contact@codincloud.net
     privateKeySecretRef:
-      name: letsencrypt-prod
+      name: letsencrypt-prod-key
     solvers:
     - http01:
         ingress:

@@ -1,21 +1,18 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: argocd-server-ingress
+  name: argocd-server
   namespace: argocd
   annotations:
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
-    # Important pour ArgoCD - gRPC + HTTP
-    traefik.ingress.kubernetes.io/router.middlewares: "argocd-server-grpc-web@kubernetescrd"
-    # Redirection HTTPS
-    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    traefik.ingress.kubernetes.io/router.entrypoints: "web,websecure"
+    traefik.ingress.kubernetes.io/redirect-scheme: "https"
 spec:
   ingressClassName: traefik
   tls:
   - hosts:
     - argocd.codincloud.net
-    secretName: argocd-server-tls
+    secretName: argocd-tls
   rules:
   - host: argocd.codincloud.net
     http:
@@ -26,19 +23,4 @@ spec:
           service:
             name: argocd-server
             port:
-              number: 443  # ArgoCD utilise HTTPS
----
-# Middleware pour ArgoCD (gRPC-Web support)
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: argocd-server-grpc-web
-  namespace: argocd
-spec:
-  headers:
-    customRequestHeaders:
-      X-Forwarded-Proto: "https"
-      X-Forwarded-For: ""
-    customResponseHeaders:
-      X-Frame-Options: "SAMEORIGIN"
-      X-Content-Type-Options: "nosniff"
+              number: 80

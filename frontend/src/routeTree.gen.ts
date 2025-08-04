@@ -9,48 +9,55 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as SceneIndexRouteImport } from './routes/scene/index'
-import { Route as HomeIndexRouteImport } from './routes/home/index'
 
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SceneIndexRoute = SceneIndexRouteImport.update({
   id: '/scene/',
   path: '/scene/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HomeIndexRoute = HomeIndexRouteImport.update({
-  id: '/home/',
-  path: '/home/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
-  '/home': typeof HomeIndexRoute
+  '/': typeof IndexRoute
   '/scene': typeof SceneIndexRoute
 }
 export interface FileRoutesByTo {
-  '/home': typeof HomeIndexRoute
+  '/': typeof IndexRoute
   '/scene': typeof SceneIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/home/': typeof HomeIndexRoute
+  '/': typeof IndexRoute
   '/scene/': typeof SceneIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/home' | '/scene'
+  fullPaths: '/' | '/scene'
   fileRoutesByTo: FileRoutesByTo
-  to: '/home' | '/scene'
-  id: '__root__' | '/home/' | '/scene/'
+  to: '/' | '/scene'
+  id: '__root__' | '/' | '/scene/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  HomeIndexRoute: typeof HomeIndexRoute
+  IndexRoute: typeof IndexRoute
   SceneIndexRoute: typeof SceneIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/scene/': {
       id: '/scene/'
       path: '/scene'
@@ -58,18 +65,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SceneIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/home/': {
-      id: '/home/'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof HomeIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  HomeIndexRoute: HomeIndexRoute,
+  IndexRoute: IndexRoute,
   SceneIndexRoute: SceneIndexRoute,
 }
 export const routeTree = rootRouteImport

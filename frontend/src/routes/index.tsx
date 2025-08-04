@@ -6,7 +6,7 @@ import { BackgroundImage } from '@/components/background'
 import Header from '@/components/Header'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-export const Route = createFileRoute('/home/')({
+export const Route = createFileRoute('/')({
   component: App,
 })
 

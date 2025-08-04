@@ -1,0 +1,4 @@
+
+- [ ] features @frontend/features/timer: internaliser tout le décompte de temps, et conserver uniquement un event sur "timer start" et "timer end", pas à chaque `tick` 
+- [ ] Fix l'affichage du timer: qui affiche aujourd'hui n'importe quelle valeur avec des decimals (10 decimals derrière), comme si le control de la feat 'Audio' pilotait le Timer, en fonction de la longueur de la playlist. Il ne faut pas que l'audio pilote le timer, c'est l'inverse: uniquement le Timer doit déclencher le son, et à la fin d'une session de DeepWork, on doit stopper le son en fade out
+- Ne plus "refresh" le son chargé dans la "playlist" si on modifie un control de l'audio (que ce soit le son )

@@ -13,6 +13,10 @@ type MapConfig = {
 };
 
 const maps: Record<string, MapConfig> = {
+    floor_grass: {
+        scale: 2,
+        position: [0, -1, 0],
+    },
     forest: {
         scale: 10,
         position: [0, 0, 0],
@@ -48,24 +52,17 @@ interface ExperienceProps {
 }
 
 export const Experience = ({ debugMode = false }: ExperienceProps) => {
-    const { tree, addTree, clearTrees } = useForestStore()
+    const { trees } = useForestStore()
 
     const shadowCameraRef = useRef(null);
-    const { map, showTrees, treeScale } = useControls("Map", {
+    const { map, showTrees } = useControls("Map", {
         map: {
-            value: "forest",
+            value: "floor_grass",
             options: Object.keys(maps),
         },
         showTrees: {
             value: true,
             label: "Show Trees"
-        },
-        treeScale: {
-            value: 5,
-            min: 0.1,
-            max: 20,
-            step: 0.1,
-            label: "Tree Scale"
         }
     });
 
@@ -91,13 +88,12 @@ export const Experience = ({ debugMode = false }: ExperienceProps) => {
                 />
             </directionalLight>
             <Physics key={map}>
-                {showTrees && tree.map((t) => (
+                {showTrees && trees.map((tree) => (
                     <Tree
-                        key={t.id}
-                        position={[t.position.x, t.position.y, t.position.z]}
-                        model={"models/tree.glb"}
-                        scale={treeScale}
+                        key={tree.id}
+                        tree={tree}
                         debugMode={debugMode}
+                        showSessionInfo={debugMode}
                     />
                 ))}
                 <Map

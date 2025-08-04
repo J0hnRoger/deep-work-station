@@ -21,6 +21,7 @@ export interface TimerStartedEvent extends DeepWorkEvent {
   }
 }
 
+// @deprecated - Timer pause/resume are now internal, no events dispatched
 export interface TimerPausedEvent extends DeepWorkEvent {
   type: 'timer_paused'
   payload: {
@@ -29,6 +30,7 @@ export interface TimerPausedEvent extends DeepWorkEvent {
   }
 }
 
+// @deprecated - Timer pause/resume are now internal, no events dispatched
 export interface TimerResumedEvent extends DeepWorkEvent {
   type: 'timer_resumed'
   payload: {
@@ -37,6 +39,7 @@ export interface TimerResumedEvent extends DeepWorkEvent {
   }
 }
 
+// @deprecated - Timer stop is now internal, no events dispatched  
 export interface TimerStoppedEvent extends DeepWorkEvent {
   type: 'timer_stopped'
   payload: {
@@ -45,6 +48,16 @@ export interface TimerStoppedEvent extends DeepWorkEvent {
   }
 }
 
+export interface TimerCompletedEvent extends DeepWorkEvent {
+  type: 'timer_completed'
+  payload: {
+    mode: 'pomodoro' | 'deep-work' | 'custom'
+    duration: number
+    quality?: 'low' | 'medium' | 'high'
+  }
+}
+
+// @deprecated - Use timer_completed instead
 export interface SessionCompletedEvent extends DeepWorkEvent {
   type: 'session_completed'
   payload: {
@@ -228,10 +241,11 @@ export interface DataImportedEvent extends DeepWorkEvent {
 // Union type for all events
 export type DeepWorkEventUnion = 
   | TimerStartedEvent
-  | TimerPausedEvent
-  | TimerResumedEvent
-  | TimerStoppedEvent
-  | SessionCompletedEvent
+  | TimerCompletedEvent
+  | TimerPausedEvent // @deprecated
+  | TimerResumedEvent // @deprecated  
+  | TimerStoppedEvent // @deprecated
+  | SessionCompletedEvent // @deprecated
   | BreakStartedEvent
   | AudioPlayEvent
   | AudioPauseEvent

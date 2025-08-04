@@ -29,7 +29,7 @@ export interface TimerState {
   currentSession: TimerSession | null
   isRunning: boolean
   isPaused: boolean
-  currentTime: number // secondes restantes
+  timerCurrentTime: number // secondes restantes - renommé pour éviter confusion avec audio
   
   // Configuration
   mode: TimerMode
@@ -39,6 +39,9 @@ export interface TimerState {
   // Break management
   isBreak: boolean
   breakTime: number // secondes restantes
+  
+  // Timer interne
+  timerInterval: NodeJS.Timeout | null
   
   // Session management
   sessionsToday: number
@@ -120,12 +123,16 @@ export interface TimerActions {
   startBreak: () => void
   switchMode: (mode: TimerMode) => void
   setCustomDuration: (minutes: number) => void
-  updateCurrentTime: (time: number) => void
+  updateTimerCurrentTime: (time: number) => void // renommé pour éviter confusion avec audio
   setAutoStartBreaks: (enabled: boolean) => void
   setAutoStartPomodoros: (enabled: boolean) => void
   setLongBreakInterval: (interval: number) => void
   setAutoPauseInactive: (enabled: boolean) => void
   setInactiveThreshold: (minutes: number) => void
+  
+  // Nouveaux pour timer interne
+  startInternalTimer: () => void
+  stopInternalTimer: () => void
 }
 
 // Combined Timer Slice Type

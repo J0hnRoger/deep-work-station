@@ -13,7 +13,7 @@ const initialState = {
   currentSession: null,
   isRunning: false,
   isPaused: false,
-  currentTime: 0,
+  timerCurrentTime: 0, // renommé de currentTime
   
   // Configuration
   mode: 'deep-work' as const,
@@ -23,6 +23,9 @@ const initialState = {
   // Break management
   isBreak: false,
   breakTime: 0,
+  
+  // Timer interne
+  timerInterval: null as NodeJS.Timeout | null,
   
   // Session management
   sessionsToday: 0,
@@ -48,10 +51,13 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
       currentSession: session,
       isRunning: true,
       isPaused: false,
-      currentTime: state.currentPreset.workDuration * 60,
+      timerCurrentTime: state.currentPreset.workDuration * 60,
       isBreak: false,
       breakTime: 0
     })
+    
+    // Start internal timer
+    get().startInternalTimer()
     
     // Dispatch event for audio system
     get().dispatchGlobalEvent({
@@ -66,6 +72,8 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
     const state = get()
     set({ isPaused: true })
     
+    // Timer interval will automatically pause due to isPaused check
+    
     if (state.currentSession) {
       set({
         currentSession: {
@@ -76,18 +84,14 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
       })
     }
     
-    // Dispatch event for audio system
-    get().dispatchGlobalEvent({
-      type: 'timer_paused',
-      payload: {},
-      timestamp: Date.now(),
-      id: `timer_pause_${Date.now()}`
-    })
+    // No event dispatch needed - pause is internal state only
   },
   
   resumeTimer: () => {
     const state = get()
     set({ isPaused: false })
+    
+    // Timer interval will automatically resume due to isPaused check
     
     if (state.currentSession) {
       set({
@@ -99,18 +103,15 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
       })
     }
     
-    // Dispatch event for audio system
-    get().dispatchGlobalEvent({
-      type: 'timer_resumed',
-      payload: {},
-      timestamp: Date.now(),
-      id: `timer_resume_${Date.now()}`
-    })
+    // No event dispatch needed - resume is internal state only
   },
   
   stopTimer: () => {
     const state = get()
     const session = state.currentSession
+    
+    // Stop internal timer
+    get().stopInternalTimer()
     
     if (session) {
       const completedSession = {
@@ -137,28 +138,25 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
       currentSession: null,
       isRunning: false,
       isPaused: false,
-      currentTime: 0,
+      timerCurrentTime: 0,
       isBreak: false,
       breakTime: 0
     })
     
-    // Dispatch event for audio system
-    get().dispatchGlobalEvent({
-      type: 'timer_stopped',
-      payload: {},
-      timestamp: Date.now(),
-      id: `timer_stop_${Date.now()}`
-    })
+    // No event dispatch needed for stop - only start/complete matter for audio
   },
   
   resetTimer: () => {
     const state = get()
     const duration = state.currentPreset.workDuration * 60
     
+    // Stop internal timer
+    get().stopInternalTimer()
+    
     set({
       isRunning: false,
       isPaused: false,
-      currentTime: duration,
+      timerCurrentTime: duration,
       isBreak: false,
       breakTime: 0
     })
@@ -200,7 +198,7 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
         set({
           isBreak: true,
           breakTime: breakDuration,
-          currentTime: breakDuration
+          timerCurrentTime: breakDuration
         })
         
         // Dispatch break started event
@@ -215,22 +213,22 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
           currentSession: null,
           isRunning: false,
           isPaused: false,
-          currentTime: 0,
+          timerCurrentTime: 0,
           isBreak: false,
           breakTime: 0
         })
       }
       
-      // Dispatch session completed event
+      // Dispatch timer completed event
       get().dispatchGlobalEvent({
-        type: 'session_completed',
+        type: 'timer_completed',
         payload: { 
           mode: session.mode, 
           duration: session.plannedDuration,
           quality: 'medium'
         },
         timestamp: Date.now(),
-        id: `session_complete_${Date.now()}`
+        id: `timer_complete_${Date.now()}`
       })
     }
   },
@@ -242,7 +240,7 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
     set({
       isBreak: true,
       breakTime: breakDuration,
-      currentTime: breakDuration,
+      timerCurrentTime: breakDuration,
       isRunning: true,
       isPaused: false
     })
@@ -262,7 +260,7 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
       set({
         mode,
         currentPreset: preset,
-        currentTime: preset.workDuration * 60
+        timerCurrentTime: preset.workDuration * 60
       })
     }
   },
@@ -271,8 +269,42 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
     set({ customDuration: minutes })
   },
   
-  updateCurrentTime: (time) => {
-    set({ currentTime: time })
+  updateTimerCurrentTime: (time) => {
+    set({ timerCurrentTime: time })
+  },
+  
+  startInternalTimer: () => {
+    const state = get()
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval)
+    }
+    
+    const interval = setInterval(() => {
+      const currentState = get()
+      if (!currentState.isRunning || currentState.isPaused) {
+        return
+      }
+      
+      const newTime = currentState.timerCurrentTime - 1
+      
+      if (newTime <= 0) {
+        // Timer completed
+        get().completeSession()
+        get().stopInternalTimer()
+      } else {
+        set({ timerCurrentTime: newTime })
+      }
+    }, 1000)
+    
+    set({ timerInterval: interval })
+  },
+  
+  stopInternalTimer: () => {
+    const state = get()
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval)
+      set({ timerInterval: null })
+    }
   },
   
   setAutoStartBreaks: (enabled) => {

@@ -273,19 +273,10 @@ export function subscribeAudioSystem(
     }
   }
   
-  if (latestEvent.type === 'timer_paused') {
-    if (state.autoPauseOnTimerPause) {
-      state.pause()
-    }
-  }
+  // NOTE: Timer pause/resume events are no longer dispatched since timer logic is internal
+  // Audio pause/resume should be handled via UI controls or settings, not automatic sync
   
-  if (latestEvent.type === 'timer_resumed') {
-    if (state.autoPauseOnTimerPause && state.isPaused) {
-      state.play()
-    }
-  }
-  
-  if (latestEvent.type === 'timer_stopped' || latestEvent.type === 'session_completed') {
+  if (latestEvent.type === 'timer_completed') {
     if (state.autoStopOnTimerComplete) {
       state.stop()
     }

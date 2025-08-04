@@ -5,7 +5,7 @@ interface DebugInfoProps {
 }
 
 export const DebugInfo = ({ debugMode }: DebugInfoProps) => {
-  const { tree } = useForestStore();
+  const { trees } = useForestStore();
 
   if (!debugMode) return null;
 
@@ -27,9 +27,9 @@ export const DebugInfo = ({ debugMode }: DebugInfoProps) => {
     >
       <h3 style={{ margin: "0 0 10px 0", fontSize: "14px" }}>Debug Info</h3>
       <div style={{ marginBottom: "10px" }}>
-        <strong>Arbres: {tree.length}</strong>
+        <strong>Arbres: {trees.length}</strong>
       </div>
-      {tree.map((t) => (
+      {trees.map((t) => (
         <div key={t.id} style={{ marginBottom: "5px", fontSize: "11px" }}>
           <span style={{ color: "#ff6b6b" }}>ID: {t.id}</span>
           <br />

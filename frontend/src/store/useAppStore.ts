@@ -24,7 +24,7 @@ import type { SettingsSlice } from '@/features/settings/settingsTypes'
 
 import { createUserSlice, subscribeUserSystem } from '@/features/user/slices/userSlice'
 import type { UserSlice } from '@/features/user/userTypes'
-import { createForestSlice, type ForestSlice } from '@/features/forest/slices/forestSlice'
+import { createForestSlice, subscribeForestSystem, type ForestSlice } from '@/features/forest/slices/forestSlice'
 
 // Combined App Store Interface
 export interface AppStore extends 
@@ -211,6 +211,7 @@ useAppStore.subscribe(
     subscribeSessionTrackingSystem(events, state)
     subscribeSettingsSystem(events, state)
     subscribeUserSystem(events, state)
+    subscribeForestSystem(events, state)
   }
 )
 

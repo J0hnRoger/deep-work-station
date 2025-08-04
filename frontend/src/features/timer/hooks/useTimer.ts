@@ -6,13 +6,12 @@ import { useEffect, useRef } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 
 export const useTimer = () => {
-  const intervalRef = useRef<number | null>(null)
   const lastActiveRef = useRef<number>(Date.now())
   
   // Accès au store unifié via sélecteurs
   const isRunning = useAppStore(state => state.isRunning)
   const isPaused = useAppStore(state => state.isPaused)
-  const currentTime = useAppStore(state => state.currentTime)
+  const timerCurrentTime = useAppStore(state => state.timerCurrentTime)
   const isBreak = useAppStore(state => state.isBreak)
   const autoPauseInactive = useAppStore(state => state.autoPauseInactive)
   const inactiveThreshold = useAppStore(state => state.inactiveThreshold)
@@ -21,9 +20,7 @@ export const useTimer = () => {
   const soundEnabled = useAppStore(state => state.ui.soundEnabled)
   
   // Actions du store unifié
-  const completeSession = useAppStore(state => state.completeSession)
   const pauseTimer = useAppStore(state => state.pauseTimer)
-  const updateCurrentTime = useAppStore(state => state.updateCurrentTime)
   
   // Format time for display
   const formatTime = (seconds: number): string => {
@@ -32,42 +29,22 @@ export const useTimer = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
   
-  // Handle timer countdown
+  // Session completion notification handler
   useEffect(() => {
-    if (isRunning && !isPaused) {
-      intervalRef.current = setInterval(() => {
-        const newTime = Math.max(0, useAppStore.getState().currentTime - 1)
-        updateCurrentTime(newTime)
-        
-        // Check if timer completed
-        if (newTime <= 0) {
-          completeSession()
-          
-          // Notification for session complete
-          if (enableNotifications && 'Notification' in window) {
-            if (Notification.permission === 'granted') {
-              new Notification('Session Complete! 🎉', {
-                body: isBreak ? 'Break time is over' : 'Focus session completed',
-                icon: '/favicon.ico',
-                silent: !soundEnabled
-              })
-            }
-          }
+    // This effect only handles notifications - timer logic is now in the slice
+    if (timerCurrentTime === 0 && isRunning) {
+      // Notification for session complete
+      if (enableNotifications && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification('Session Complete! 🎉', {
+            body: isBreak ? 'Break time is over' : 'Focus session completed',
+            icon: '/favicon.ico',
+            silent: !soundEnabled
+          })
         }
-      }, 1000) as unknown as number
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
       }
     }
-    
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [isRunning, isPaused, isBreak, completeSession, enableNotifications, soundEnabled, updateCurrentTime])
+  }, [timerCurrentTime, isRunning, isBreak, enableNotifications, soundEnabled])
   
   // Handle window focus/blur for activity tracking
   useEffect(() => {
@@ -133,7 +110,7 @@ export const useTimer = () => {
   
   return {
     formatTime,
-    timeDisplay: formatTime(currentTime),
-    progress: currentTime > 0 ? ((currentPreset.workDuration * 60 - currentTime) / (currentPreset.workDuration * 60)) * 100 : 0
+    timeDisplay: formatTime(timerCurrentTime),
+    progress: timerCurrentTime > 0 ? ((currentPreset.workDuration * 60 - timerCurrentTime) / (currentPreset.workDuration * 60)) * 100 : 0
   }
 }

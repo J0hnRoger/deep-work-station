@@ -191,6 +191,157 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 - **Kubernetes State**: ArgoCD provides declarative state management
 - **Configuration**: All configs stored in git (GitOps)
 
+---
+
+# ADR: ArgoCD GitOps Setup with Let's Encrypt Integration
+
+## Decision Record
+
+**Date**: August 2025  
+**Status**: Implemented  
+**Context**: Deployment of Deep Work Station with ArgoCD + cert-manager integration
+
+## Problem Statement
+
+Setting up ArgoCD for GitOps deployment on a K3s cluster with existing Traefik ingress controller and cert-manager for SSL certificate management.
+
+## Decision Drivers
+
+- Existing K3s cluster with Traefik (not disabled)
+- Pre-existing cert-manager with Let's Encrypt issuers configured
+- Need for automated GitOps deployment
+- SSL termination requirement
+- Single production environment (no staging needed)
+
+## Decisions Made
+
+### 1. **ArgoCD Configuration Strategy**
+- **Decision**: Configure ArgoCD to run in "insecure" mode behind Traefik proxy
+- **Rationale**: Avoids SSL/TLS conflicts between ArgoCD's internal HTTPS and Traefik termination
+- **Implementation**: 
+  ```yaml
+  server.insecure: "true"
+  url: "https://argocd.codincloud.net"
+  ```
+
+### 2. **SSL Certificate Management**
+- **Decision**: Use existing cert-manager with Let's Encrypt, NOT Traefik middleware
+- **Rationale**: 
+  - cert-manager provides better certificate lifecycle management
+  - Avoids Traefik CRD dependencies
+  - Cleaner separation of concerns
+- **Implementation**: Standard ingress annotations with cert-manager.io/cluster-issuer
+
+### 3. **Deployment Structure Simplification**
+- **Decision**: Single production deployment, no overlay complexity
+- **Rationale**: Project doesn't require staging environment
+- **Implementation**: 
+  ```
+  deploy/manifests/  # Direct deployment manifests
+  ├── deployment.yaml (3 replicas, production resources)
+  ├── service.yaml
+  ├── ingress.yaml (deepwork.codincloud.net)
+  └── kustomization.yaml
+  ```
+
+## Implementation Challenges & Solutions
+
+### Challenge 1: Traefik Middleware CRD Not Found
+**Problem**: ArgoCD sync failed with "no matches for kind 'Middleware'"
+```
+Error: no matches for Id Deployment.v1.apps/deep-work-station.[noNs]
+failed to find unique target for patch
+```
+
+**Solution**: 
+- Removed Traefik middleware dependencies
+- Used standard Kubernetes ingress with cert-manager annotations
+- Simplified ingress configuration
+
+### Challenge 2: Kustomize Deprecated Syntax
+**Problem**: Kustomize warnings about deprecated fields
+```
+Warning: 'commonLabels' is deprecated. Please use 'labels' instead
+Warning: 'patchesStrategicMerge' is deprecated. Please use 'patches' instead
+```
+
+**Solution**: Updated to modern Kustomize syntax, but later simplified to avoid complexity
+
+### Challenge 3: ArgoCD SSL Redirect Loops
+**Problem**: `ERR_TOO_MANY_REDIRECTS` when accessing ArgoCD UI
+**Root Cause**: Both ArgoCD and Traefik trying to handle SSL termination
+
+**Solution**:
+```yaml
+# ArgoCD ConfigMap
+server.insecure: "true"  # Let Traefik handle SSL
+
+# Ingress configuration
+traefik.ingress.kubernetes.io/redirect-scheme: "https"
+cert-manager.io/cluster-issuer: "letsencrypt-prod"
+```
+
+### Challenge 4: Docker Context Path Issues
+**Problem**: Dockerfile couldn't find nginx.conf when moved to frontend/ directory
+**Solution**: Reorganized Docker build context and file paths
+
+## Key Configuration Files
+
+### ArgoCD Application
+```yaml
+# argocd/application.yaml
+spec:
+  source:
+    repoURL: https://github.com/j0hnroger/deep-work-station.git
+    path: deploy/manifests  # Simplified path
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
+
+### ArgoCD Ingress with cert-manager
+```yaml
+# argocd/argocd-ingress.yaml
+annotations:
+  cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  traefik.ingress.kubernetes.io/redirect-scheme: "https"
+spec:
+  tls:
+  - hosts: [argocd.codincloud.net]
+    secretName: argocd-tls
+```
+
+## Operational Outcomes
+
+### Successes
+- ✅ **GitOps Pipeline**: Fully automated deployment on git push
+- ✅ **SSL Integration**: Seamless cert-manager + Let's Encrypt integration
+- ✅ **High Availability**: 3 replicas with rolling updates
+- ✅ **Monitoring**: ArgoCD UI accessible at https://argocd.codincloud.net
+- ✅ **Application Access**: https://deepwork.codincloud.net
+
+### Metrics
+- **Deployment Time**: ~2-3 minutes from git push to live
+- **Certificate Issuance**: ~30 seconds with existing ACME account
+- **Resource Usage**: 128Mi/100m per pod (production-ready)
+
+## Lessons Learned
+
+1. **Keep SSL Simple**: Let one component handle SSL termination (Traefik + cert-manager)
+2. **Avoid Over-Engineering**: Single environment doesn't need complex overlays
+3. **CRD Dependencies**: Check for required CRDs before using advanced features
+4. **ArgoCD Behind Proxy**: Always use `server.insecure: true` behind SSL proxy
+
+## Future Considerations
+
+- **Monitoring**: Add Prometheus metrics for ArgoCD sync status
+- **Backup**: Implement ArgoCD configuration backup strategy
+- **Security**: Consider ArgoCD RBAC for team access
+- **Scalability**: Multi-cluster support if expanding beyond single VPS
+
+---
+
 ## Next Steps
 
 1. **Monitoring**: Add Prometheus/Grafana for observability

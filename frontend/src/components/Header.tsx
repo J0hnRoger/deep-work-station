@@ -1,6 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Headphones } from 'lucide-react'
-import { useAudioStore } from '../store/audio-store'
+import { useAppStore } from '../store/useAppStore'
 import { SettingsDialog } from '../components/settings'
 import { cn } from '../lib/utils'
 
@@ -9,7 +9,9 @@ interface HeaderProps {
 }
 
 export default function Header({ className }: HeaderProps) {
-  const { playlists, currentPlaylist, setPlaylist } = useAudioStore()
+  const playlists = useAppStore(state => state.playlists)
+  const currentPlaylist = useAppStore(state => state.currentPlaylist)
+  const setCurrentPlaylist = useAppStore(state => state.setCurrentPlaylist)
   
   // Debug: uncomment to troubleshoot re-renders
   // console.log('Header render:', { 
@@ -41,7 +43,7 @@ export default function Header({ className }: HeaderProps) {
             value={currentPlaylist?.id || ''}
             onValueChange={(value) => {
               const playlist = playlists.find(p => p.id === value)
-              if (playlist) setPlaylist(playlist)
+              if (playlist) setCurrentPlaylist(playlist)
             }}
           >
             <SelectTrigger className="w-40">

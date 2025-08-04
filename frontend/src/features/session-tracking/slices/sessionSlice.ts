@@ -35,7 +35,7 @@ const initialState = {
   autoSaveStats: true
 }
 
-export const createSessionTrackingSlice: StateCreator<AppStore> = (set, get) => ({
+export const createSessionTrackingSlice: StateCreator<AppStore, [], [], SessionTrackingSlice> = (set, get) => ({
   ...initialState,
   
   // Session Tracking Actions

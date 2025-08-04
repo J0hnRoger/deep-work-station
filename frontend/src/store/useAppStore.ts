@@ -43,12 +43,13 @@ export const useAppStore = create<AppStore>()(
   devtools(
     subscribeWithSelector(
       persist(
-        (set, get) => {
+        (...a) => {
+          const [set, get] = a
           // Create slices without circular reference
-          const timerSlice = createTimerSlice(set, get)
-          const audioSlice = createAudioSlice(set, get)
-          const sessionSlice = createSessionTrackingSlice(set, get)
-          const settingsSlice = createSettingsSlice(set, get)
+          const timerSlice = createTimerSlice(...a)
+          const audioSlice = createAudioSlice(...a)
+          const sessionSlice = createSessionTrackingSlice(...a)
+          const settingsSlice = createSettingsSlice(...a)
           
           return {
             // Combine all feature slices
@@ -111,7 +112,8 @@ export const useAppStore = create<AppStore>()(
               id: `init_${Date.now()}`
             })
           }
-        }),
+        }
+      },
         {
           name: 'deep-work-station-store',
           partialize: (state) => ({

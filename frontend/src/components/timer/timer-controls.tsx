@@ -1,6 +1,6 @@
 import { Play, Pause, Square, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useTimerStore } from '@/store/timer-store'
+import { useAppStore } from '@/store/useAppStore'
 import { cn } from '@/lib/utils'
 
 interface TimerControlsProps {
@@ -8,20 +8,19 @@ interface TimerControlsProps {
 }
 
 export function TimerControls({ className }: TimerControlsProps) {
-  const {
-    isRunning,
-    isPaused,
-    startTimer,
-    pauseTimer,
-    resumeTimer,
-    stopTimer,
-    resetTimer,
-    mode
-  } = useTimerStore()
+  const isRunning = useAppStore(state => state.isRunning)
+  const isPaused = useAppStore(state => state.isPaused)
+  const mode = useAppStore(state => state.mode)
+  
+  const startTimer = useAppStore(state => state.startTimer)
+  const pauseTimer = useAppStore(state => state.pauseTimer)
+  const resumeTimer = useAppStore(state => state.resumeTimer)
+  const stopTimer = useAppStore(state => state.stopTimer)
+  const resetTimer = useAppStore(state => state.resetTimer)
   
   const handlePlayPause = () => {
     if (!isRunning) {
-      startTimer(mode)
+      startTimer()
     } else if (isPaused) {
       resumeTimer()
     } else {

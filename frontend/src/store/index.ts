@@ -6,11 +6,11 @@
 // Main unified store
 export { useAppStore, type AppStore } from './useAppStore'
 
-// Legacy store exports (for backward compatibility during migration)
-export { useTimerStore, type TimerState, type TimerMode, type TimerSession, type TimerPreset } from './timer-store'
-export { useAudioStore, type AudioState, type AudioTrack, type Playlist, type EQPreset } from './audio-store'
-export { useSettingsStore, type SettingsState, type UserSettings, type AppSettings } from './settings-store'
-export { useBackgroundStore, type BackgroundState } from './background-store'
+// Types re-exports from features for convenience
+export type { TimerSlice, TimerMode, TimerSession, TimerPreset } from '@/features/timer/timerTypes'
+export type { AudioSlice, AudioTrack, Playlist, EQPreset } from '@/features/audio/audioTypes'
+export type { SessionTrackingSlice, TrackedSession, DayStats, WeekStats } from '@/features/session-tracking/sessionTypes'
+export type { SettingsSlice, BackgroundSettings, UISettings, GeneralSettings, KeyboardShortcuts } from '@/features/settings/settingsTypes'
 
 // Store initialization helper
 export const initializeStores = () => {

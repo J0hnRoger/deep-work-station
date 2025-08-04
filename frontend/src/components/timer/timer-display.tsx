@@ -1,5 +1,5 @@
-import { useTimerStore } from '@/store/timer-store'
-import { useTimer } from '@/hooks/use-timer'
+import { useAppStore } from '@/store/useAppStore'
+import { useTimer } from '@/features/timer/hooks/useTimer'
 import { cn } from '@/lib/utils'
 
 interface TimerDisplayProps {
@@ -8,7 +8,10 @@ interface TimerDisplayProps {
 
 export function TimerDisplay({ className }: TimerDisplayProps) {
   const { timeDisplay, progress } = useTimer()
-  const { isRunning, isPaused, isBreak, currentPreset } = useTimerStore()
+  const isRunning = useAppStore(state => state.isRunning)
+  const isPaused = useAppStore(state => state.isPaused)
+  const isBreak = useAppStore(state => state.isBreak)
+  const currentPreset = useAppStore(state => state.currentPreset)
   
   const getStatusColor = () => {
     if (isBreak) return 'text-green-400'

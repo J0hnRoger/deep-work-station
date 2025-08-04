@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { usePlaylist } from '@/hooks/use-playlist'
+import { usePlaylist } from '@/features/audio/hooks/usePlaylist'
 import { Button } from '@/components/ui/button'
 import { RefreshCw, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'

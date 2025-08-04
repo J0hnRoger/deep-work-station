@@ -36,7 +36,7 @@ const initialState = {
   inactiveThreshold: 5
 }
 
-export const createTimerSlice: StateCreator<AppStore> = (set, get) => ({
+export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set, get) => ({
   ...initialState,
   
   // Timer Actions

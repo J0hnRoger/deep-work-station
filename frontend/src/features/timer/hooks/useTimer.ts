@@ -1,27 +1,29 @@
+// =============================================================================
+// TIMER HOOK - Façade vers useAppStore
+// =============================================================================
+
 import { useEffect, useRef } from 'react'
-import { useTimerStore } from '@/store/timer-store'
-import { useSettingsStore } from '@/store/settings-store'
+import { useAppStore } from '@/store/useAppStore'
 
 export const useTimer = () => {
   const intervalRef = useRef<number | null>(null)
   const lastActiveRef = useRef<number>(Date.now())
   
-  const {
-    isRunning,
-    isPaused,
-    currentTime,
-    isBreak,
-    autoPauseInactive,
-    inactiveThreshold,
-    completeSession,
-    pauseTimer
-  } = useTimerStore()
+  // Accès au store unifié via sélecteurs
+  const isRunning = useAppStore(state => state.isRunning)
+  const isPaused = useAppStore(state => state.isPaused)
+  const currentTime = useAppStore(state => state.currentTime)
+  const isBreak = useAppStore(state => state.isBreak)
+  const autoPauseInactive = useAppStore(state => state.autoPauseInactive)
+  const inactiveThreshold = useAppStore(state => state.inactiveThreshold)
+  const currentPreset = useAppStore(state => state.currentPreset)
+  const enableNotifications = useAppStore(state => state.ui.enableNotifications)
+  const soundEnabled = useAppStore(state => state.ui.soundEnabled)
   
-  const { 
-    setWindowState, 
-    updateLastActiveTime,
-    user: { enableNotifications, notifyOnSessionComplete }
-  } = useSettingsStore()
+  // Actions du store unifié
+  const completeSession = useAppStore(state => state.completeSession)
+  const pauseTimer = useAppStore(state => state.pauseTimer)
+  const updateCurrentTime = useAppStore(state => state.updateCurrentTime)
   
   // Format time for display
   const formatTime = (seconds: number): string => {
@@ -34,20 +36,20 @@ export const useTimer = () => {
   useEffect(() => {
     if (isRunning && !isPaused) {
       intervalRef.current = setInterval(() => {
-        useTimerStore.getState().updateCurrentTime(
-          Math.max(0, useTimerStore.getState().currentTime - 1)
-        )
+        const newTime = Math.max(0, useAppStore.getState().currentTime - 1)
+        updateCurrentTime(newTime)
         
         // Check if timer completed
-        if (useTimerStore.getState().currentTime <= 0) {
+        if (newTime <= 0) {
           completeSession()
           
           // Notification for session complete
-          if (enableNotifications && notifyOnSessionComplete && 'Notification' in window) {
+          if (enableNotifications && 'Notification' in window) {
             if (Notification.permission === 'granted') {
               new Notification('Session Complete! 🎉', {
                 body: isBreak ? 'Break time is over' : 'Focus session completed',
-                icon: '/favicon.ico'
+                icon: '/favicon.ico',
+                silent: !soundEnabled
               })
             }
           }
@@ -65,26 +67,23 @@ export const useTimer = () => {
         clearInterval(intervalRef.current)
       }
     }
-  }, [isRunning, isPaused, isBreak, completeSession, enableNotifications, notifyOnSessionComplete])
+  }, [isRunning, isPaused, isBreak, completeSession, enableNotifications, soundEnabled, updateCurrentTime])
   
-  // Handle window focus/blur for auto-pause
+  // Handle window focus/blur for activity tracking
   useEffect(() => {
     const handleFocus = () => {
-      setWindowState('focused')
-      updateLastActiveTime()
       lastActiveRef.current = Date.now()
     }
     
     const handleBlur = () => {
-      setWindowState('blurred')
       lastActiveRef.current = Date.now()
     }
     
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        handleBlur()
-      } else {
+      if (!document.hidden) {
         handleFocus()
+      } else {
+        handleBlur()
       }
     }
     
@@ -97,7 +96,7 @@ export const useTimer = () => {
       window.removeEventListener('blur', handleBlur)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [setWindowState, updateLastActiveTime])
+  }, [])
   
   // Auto-pause on inactivity
   useEffect(() => {
@@ -114,7 +113,8 @@ export const useTimer = () => {
           if (Notification.permission === 'granted') {
             new Notification('Timer Paused', {
               body: `Timer paused due to ${Math.round(inactiveTime)} minutes of inactivity`,
-              icon: '/favicon.ico'
+              icon: '/favicon.ico',
+              silent: !soundEnabled
             })
           }
         }
@@ -122,7 +122,7 @@ export const useTimer = () => {
     }, 30000) // Check every 30 seconds
     
     return () => clearInterval(checkInactivity)
-  }, [autoPauseInactive, inactiveThreshold, isRunning, isPaused, pauseTimer, enableNotifications])
+  }, [autoPauseInactive, inactiveThreshold, isRunning, isPaused, pauseTimer, enableNotifications, soundEnabled])
   
   // Request notification permission on first use
   useEffect(() => {
@@ -134,6 +134,6 @@ export const useTimer = () => {
   return {
     formatTime,
     timeDisplay: formatTime(currentTime),
-    progress: currentTime > 0 ? ((useTimerStore.getState().currentPreset.workDuration * 60 - currentTime) / (useTimerStore.getState().currentPreset.workDuration * 60)) * 100 : 0
+    progress: currentTime > 0 ? ((currentPreset.workDuration * 60 - currentTime) / (currentPreset.workDuration * 60)) * 100 : 0
   }
 }

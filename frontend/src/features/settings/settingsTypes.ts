@@ -206,8 +206,8 @@ export class SettingsDomain {
     const merged = { ...defaults }
     
     Object.keys(imported).forEach(key => {
-      if (key in defaults && typeof defaults[key] === typeof imported[key]) {
-        merged[key] = imported[key] as any
+      if (key in defaults && typeof defaults[key] === typeof imported[key] && imported[key] !== undefined) {
+        (merged as any)[key] = imported[key]
       }
     })
     

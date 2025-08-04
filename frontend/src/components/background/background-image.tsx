@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useBackgroundStore } from '@/store/background-store'
+import { useAppStore } from '@/store/useAppStore'
 import { cn } from '@/lib/utils'
 import { unsplashService } from '@/services/unsplash'
 
@@ -17,7 +17,7 @@ export function BackgroundImage({ className }: BackgroundImageProps) {
     lastRefresh,
     fetchImagesForCategory,
     refreshCurrentImage
-  } = useBackgroundStore()
+  } = useAppStore()
 
   // Initialize background on mount
   useEffect(() => {

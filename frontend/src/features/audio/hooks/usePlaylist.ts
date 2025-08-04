@@ -1,14 +1,22 @@
+// =============================================================================
+// PLAYLIST HOOK - Façade vers useAppStore
+// =============================================================================
+
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { azureBlobService, type PlaylistFolder } from '@/services/azure-blob'
-import { useAudioStore, type Playlist } from '@/store/audio-store'
+import { useAppStore } from '@/store/useAppStore'
+import type { Playlist } from '../audioTypes'
 
 export const usePlaylist = () => {
-  const { setPlaylist } = useAudioStore()
+  // Actions du store unifié
+  const setPlaylists = useAppStore(state => state.setPlaylists)
+  const setCurrentPlaylist = useAppStore(state => state.setCurrentPlaylist)
+  const currentPlaylist = useAppStore(state => state.currentPlaylist)
   
   // Fetch playlists from Azure Blob Storage
   const {
-    data: playlistFolders,
+    data: playlistFolders,  
     isLoading,
     error,
     refetch
@@ -56,22 +64,12 @@ export const usePlaylist = () => {
     })
     
     // Replace all playlists to avoid duplicates
-    
     console.log('About to set playlists:', convertedPlaylists.map(p => ({ 
       name: p.name, 
       trackCount: p.tracks.length 
     })))
     
-    useAudioStore.setState({
-      playlists: convertedPlaylists
-    })
-    
-    // Verify they were set correctly
-    const newState = useAudioStore.getState()
-    console.log('After setState - playlists in store:', newState.playlists.map(p => ({ 
-      name: p.name, 
-      trackCount: p.tracks.length 
-    })))
+    setPlaylists(convertedPlaylists)
     
     console.log(`Loaded ${convertedPlaylists.length} playlists from Azure Blob Storage`)
     convertedPlaylists.forEach(playlist => {
@@ -79,17 +77,17 @@ export const usePlaylist = () => {
     })
     
     // Set default playlist if none selected
-    if (convertedPlaylists.length > 0 && !useAudioStore.getState().currentPlaylist) {
+    if (convertedPlaylists.length > 0 && !currentPlaylist) {
       const defaultPlaylist = convertedPlaylists.find(p => 
         p.name.toLowerCase().includes('deep') || 
         p.name.toLowerCase().includes('focus')
       ) || convertedPlaylists[0]
       
-      setPlaylist(defaultPlaylist)
+      setCurrentPlaylist(defaultPlaylist)
       console.log(`Set default playlist: ${defaultPlaylist.name}`)
     }
     
-  }, [playlistFolders, setPlaylist])
+  }, [playlistFolders, setPlaylists, setCurrentPlaylist, currentPlaylist])
   
   // Format track title from filename
   const formatTrackTitle = (filename: string): string => {

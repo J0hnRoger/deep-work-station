@@ -1,8 +1,15 @@
-import { useAudioStore } from '@/store/audio-store'
+// =============================================================================
+// AUDIO HOOK - Façade vers useAppStore (deprecated)
+// =============================================================================
 
-// Legacy Web Audio API hook - deprecated in favor of use-howler-audio
+import { useAppStore } from '@/store/useAppStore'
+
+// Legacy Web Audio API hook - deprecated in favor of useHowlerAudio
 export const useAudio = () => {
-  const { isPlaying, currentTrack, volume, eqPreset } = useAudioStore()
+  const isPlaying = useAppStore(state => state.isPlaying)
+  const currentTrack = useAppStore(state => state.currentTrack)
+  const volume = useAppStore(state => state.volume)
+  const eqPreset = useAppStore(state => state.eqPreset)
   
   // Return minimal interface for backward compatibility
   return {

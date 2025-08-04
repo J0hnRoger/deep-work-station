@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useBackgroundStore } from '@/store/background-store'
+import { useAppStore } from '@/store/useAppStore'
 import { BACKGROUND_CATEGORIES } from '@/services/unsplash'
 import { RefreshCw, Image, Palette } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -25,7 +25,7 @@ export function BackgroundSettings({ className }: BackgroundSettingsProps) {
     setRefreshInterval,
     refreshCurrentImage,
     getRandomImageFromCategory
-  } = useBackgroundStore()
+  } = useAppStore()
 
   return (
     <div className={cn('space-y-6', className)}>

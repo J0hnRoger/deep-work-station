@@ -17,12 +17,12 @@ const initialState = {
   
   // État UI des settings
   isSettingsOpen: false,
-  activeSection: 'general',
+  activeSection: 'general' as const,
   
   // Import/Export
   lastBackupDate: null,
   autoBackup: false,
-  backupFrequency: 'weekly',
+  backupFrequency: 'weekly' as const,
   
   // Reset & restoration
   hasUnsavedChanges: false,
@@ -30,7 +30,7 @@ const initialState = {
   canRedo: false
 }
 
-export const createSettingsSlice: StateCreator<AppStore> = (set, get) => ({
+export const createSettingsSlice: StateCreator<AppStore, [], [], SettingsSlice> = (set, get) => ({
   ...initialState,
   
   // Settings Actions

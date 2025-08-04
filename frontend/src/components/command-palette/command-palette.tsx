@@ -8,10 +8,7 @@ import {
   CommandList,
   CommandShortcut,
 } from '@/components/ui/command'
-import { useTimerStore } from '@/store/timer-store'
-import { useAudioStore } from '@/store/audio-store'
-import { useSettingsStore } from '@/store/settings-store'
-import { useBackgroundStore } from '@/store/background-store'
+import { useAppStore } from '@/store/useAppStore'
 import { 
   Play, 
   Pause, 
@@ -39,31 +36,28 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   
-  const {
-    isRunning,
-    isPaused,
-    mode,
-    startTimer,
-    pauseTimer,
-    resumeTimer,
-    stopTimer,
-    resetTimer,
-    switchMode
-  } = useTimerStore()
+  // Timer state and actions
+  const isRunning = useAppStore(state => state.isRunning)
+  const isPaused = useAppStore(state => state.isPaused)
+  const mode = useAppStore(state => state.mode)
+  const startTimer = useAppStore(state => state.startTimer)
+  const pauseTimer = useAppStore(state => state.pauseTimer)
+  const resumeTimer = useAppStore(state => state.resumeTimer)
+  const stopTimer = useAppStore(state => state.stopTimer)
+  const resetTimer = useAppStore(state => state.resetTimer)
+  const switchMode = useAppStore(state => state.switchMode)
   
-  const {
-    isPlaying,
-    play,
-    pause: pauseAudio,
-    next,
-    previous,
-    setVolume,
-    setEQPreset
-  } = useAudioStore()
+  // Audio state and actions
+  const isPlaying = useAppStore(state => state.isPlaying)
+  const play = useAppStore(state => state.play)
+  const pause = useAppStore(state => state.pause)
+  const next = useAppStore(state => state.next)
+  const previous = useAppStore(state => state.previous)
+  const setVolume = useAppStore(state => state.setVolume)
+  const setEQPreset = useAppStore(state => state.setEQPreset)
   
-  const { } = useSettingsStore()
-  
-  const { refreshCurrentImage } = useBackgroundStore()
+  // Settings actions
+  const openSettings = useAppStore(state => state.openSettings)
   
   // Parse volume from input (e.g., "volume 50", "vol 75")
   const parseVolumeCommand = (input: string): number | null => {
@@ -157,7 +151,7 @@ export function CommandPalette() {
       icon: isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />,
       action: () => {
         if (isPlaying) {
-          pauseAudio()
+          pause()
         } else {
           play()
         }
@@ -195,7 +189,8 @@ export function CommandPalette() {
       shortcut: '⌘R',
       icon: <Settings className="h-4 w-4" />,
       action: () => {
-        refreshCurrentImage()
+        // Background refresh functionality removed - will be reimplemented in settings
+        console.log('Background refresh requested')
         setOpen(false)
       },
       group: 'Background'

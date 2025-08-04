@@ -2,8 +2,8 @@ import { Play, Pause, SkipBack, SkipForward, Volume2, AudioLines } from 'lucide-
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useAudioStore } from '@/store/audio-store'
-import { useHowlerAudio } from '@/hooks/use-howler-audio'
+import { useAppStore } from '@/store/useAppStore'
+import { useHowlerAudio } from '@/features/audio/hooks/useHowlerAudio'
 import { cn } from '@/lib/utils'
 
 interface AudioPlayerProps {
@@ -11,21 +11,20 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ className }: AudioPlayerProps) {
-  const {
-    isPlaying,
-    currentTrack,
-    currentTime,
-    duration,
-    volume,
-    eqPreset,
-    isLoading,
-    play,
-    pause: pauseAudio,
-    next,
-    previous,
-    setVolume,
-    setEQPreset,
-  } = useAudioStore()
+  const isPlaying = useAppStore(state => state.isPlaying)
+  const currentTrack = useAppStore(state => state.currentTrack)
+  const currentTime = useAppStore(state => state.currentTime)
+  const duration = useAppStore(state => state.duration)
+  const volume = useAppStore(state => state.volume)
+  const eqPreset = useAppStore(state => state.eqPreset)
+  const isLoading = useAppStore(state => state.isLoading)
+  
+  const play = useAppStore(state => state.play)
+  const pause = useAppStore(state => state.pause)
+  const next = useAppStore(state => state.next)
+  const previous = useAppStore(state => state.previous)
+  const setVolume = useAppStore(state => state.setVolume)
+  const setEQPreset = useAppStore(state => state.setEQPreset)
   
   const { isReady, isLoaded, handleSeek, formatTime } = useHowlerAudio()
   
@@ -37,7 +36,7 @@ export function AudioPlayer({ className }: AudioPlayerProps) {
   
   const handlePlayPause = () => {
     if (isPlaying) {
-      pauseAudio()
+      pause()
     } else {
       play()
     }

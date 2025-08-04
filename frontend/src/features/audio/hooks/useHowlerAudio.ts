@@ -1,25 +1,27 @@
+// =============================================================================
+// HOWLER AUDIO HOOK - Façade vers useAppStore
+// =============================================================================
+
 import { useEffect, useRef, useCallback } from 'react'
 import { Howl, Howler } from 'howler'
-import { useAudioStore } from '@/store/audio-store'
-import { useSettingsStore } from '@/store/settings-store'
+import { useAppStore } from '@/store/useAppStore'
 
 export const useHowlerAudio = () => {
   const howlRef = useRef<Howl | null>(null)
   const updateIntervalRef = useRef<number | null>(null)
   
-  const {
-    isPlaying,
-    currentTrack,
-    volume,
-    eqPreset,
-    next,
-    updateCurrentTime,
-    setDuration,
-    setLoading,
-    setError
-  } = useAudioStore()
+  // Sélecteurs du store unifié
+  const isPlaying = useAppStore(state => state.isPlaying)
+  const currentTrack = useAppStore(state => state.currentTrack)
+  const volume = useAppStore(state => state.volume)
+  const eqPreset = useAppStore(state => state.eqPreset)
   
-  const { } = useSettingsStore()
+  // Actions du store unifié
+  const next = useAppStore(state => state.next)
+  const updateCurrentTime = useAppStore(state => state.updateCurrentTime)
+  const setDuration = useAppStore(state => state.setDuration)
+  const setLoading = useAppStore(state => state.setLoading)
+  const setError = useAppStore(state => state.setError)
   
   // Progress update functions (defined early to avoid dependency issues)
   const stopProgressUpdates = useCallback(() => {
@@ -38,7 +40,7 @@ export const useHowlerAudio = () => {
       if (howlRef.current && howlRef.current.playing()) {
         const currentTime = howlRef.current.seek() as number
         // Only update if there's a meaningful change to avoid unnecessary re-renders
-        const previousTime = useAudioStore.getState().currentTime
+        const previousTime = useAppStore.getState().currentTime
         if (Math.abs(currentTime - previousTime) >= 0.5) {
           updateCurrentTime(currentTime)
         }
@@ -133,7 +135,7 @@ export const useHowlerAudio = () => {
         howl.unload()
       }
     }
-  }, [currentTrack, volume, setDuration, setLoading, setError, next])
+  }, [currentTrack, volume, setDuration, setLoading, setError, next, startProgressUpdates, stopProgressUpdates])
   
   // Handle play/pause state changes
   useEffect(() => {

@@ -20,11 +20,11 @@ const initialState = {
   currentPlaylist: null,
   playlists: [],
   shuffleMode: false,
-  repeatMode: 'none',
+  repeatMode: 'none' as const,
   
   // Audio settings
   volume: 70,
-  eqPreset: 'neutral',
+  eqPreset: 'neutral' as const,
   crossfadeDuration: 3,
   gaplessPlayback: true,
   
@@ -40,7 +40,7 @@ const initialState = {
   breakPlaylistId: null
 }
 
-export const createAudioSlice: StateCreator<AppStore> = (set, get) => ({
+export const createAudioSlice: StateCreator<AppStore, [], [], AudioSlice> = (set, get) => ({
   ...initialState,
   
   // Audio Actions

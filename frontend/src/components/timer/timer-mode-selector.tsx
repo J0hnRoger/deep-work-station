@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button'
-import { useTimerStore, type TimerMode } from '@/store/timer-store'
+import { useAppStore } from '@/store/useAppStore'
+import type { TimerMode } from '@/features/timer/timerTypes'
+import { DEFAULT_TIMER_PRESETS } from '@/features/timer/timerTypes'
 import { cn } from '@/lib/utils'
 import { Clock, Timer, Settings } from 'lucide-react'
 
@@ -8,7 +10,10 @@ interface TimerModeSelectorProps {
 }
 
 export function TimerModeSelector({ className }: TimerModeSelectorProps) {
-  const { mode, switchMode, isRunning, presets } = useTimerStore()
+  const mode = useAppStore(state => state.mode)
+  const isRunning = useAppStore(state => state.isRunning)
+  const switchMode = useAppStore(state => state.switchMode)
+  const presets = DEFAULT_TIMER_PRESETS
   
   const getModeIcon = (timerMode: TimerMode) => {
     switch (timerMode) {

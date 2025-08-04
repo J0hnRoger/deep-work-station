@@ -2,6 +2,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Headphones } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { SettingsDialog } from '../components/settings'
+import { UserPseudo } from '../components/user-pseudo'
 import { cn } from '../lib/utils'
 
 interface HeaderProps {
@@ -59,8 +60,9 @@ export default function Header({ className }: HeaderProps) {
           </Select>
         </div>
         
-        {/* Right - Settings */}
-        <div className="flex items-center gap-2">
+        {/* Right - User and Settings */}
+        <div className="flex items-center gap-3">
+          <UserPseudo />
           <SettingsDialog />
         </div>
       </div>

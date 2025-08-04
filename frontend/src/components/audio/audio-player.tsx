@@ -50,8 +50,6 @@ export function AudioPlayer({ className }: AudioPlayerProps) {
     handleSeek(value[0])
   }
   
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-  
   if (!currentTrack) {
     return (
       <div className={cn(
@@ -103,12 +101,6 @@ export function AudioPlayer({ className }: AudioPlayerProps) {
           className="w-full"
           disabled={!isReady || !isLoaded || isLoading}
         />
-        <div className="w-full bg-muted/30 rounded-full h-1">
-          <div 
-            className="bg-primary rounded-full h-1 transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
       </div>
       
       {/* Controls */}

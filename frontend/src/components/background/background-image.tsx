@@ -1,82 +1,62 @@
 import { useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { cn } from '@/lib/utils'
-import { unsplashService } from '@/services/unsplash'
 
 interface BackgroundImageProps {
   className?: string
 }
 
 export function BackgroundImage({ className }: BackgroundImageProps) {
-  const {
-    currentImage,
-    currentCategory,
-    overlayOpacity,
-    autoRefresh,
-    refreshInterval,
-    lastRefresh,
-    fetchImagesForCategory,
-    refreshCurrentImage
-  } = useAppStore()
+  // Map to Settings slice properties (nested under background)
+  const currentBackground = useAppStore(state => state.background.currentBackground)
+  const backgroundType = useAppStore(state => state.background.backgroundType)
+  const backgroundOpacity = useAppStore(state => state.background.backgroundOpacity)
+  const customBackgroundUrl = useAppStore(state => state.background.customBackgroundUrl)
+  // const blurAmount = useAppStore(state => state.background.blurAmount) // For future blur implementation
+  
+  // For backward compatibility, create derived values
+  const currentImage = customBackgroundUrl ? { 
+    urls: { full: customBackgroundUrl },
+    user: { name: 'Custom' }
+  } : null
+  const overlayOpacity = 100 - backgroundOpacity // Inverse logic
 
-  // Initialize background on mount
+  // Debug and background change tracking
   useEffect(() => {
-    if (!currentImage) {
-      fetchImagesForCategory(currentCategory)
-    }
-  }, [currentImage, currentCategory, fetchImagesForCategory])
+    console.log('BackgroundImage: Component mounted/updated', { 
+      currentBackground, 
+      backgroundType, 
+      backgroundOpacity,
+      hasCustomUrl: !!customBackgroundUrl,
+      overlayOpacity
+    })
+  }, [currentBackground, backgroundType, backgroundOpacity, customBackgroundUrl, overlayOpacity])
 
-  // Auto-refresh functionality
-  useEffect(() => {
-    if (!autoRefresh || !lastRefresh) return
-
-    const lastRefreshTime = new Date(lastRefresh).getTime()
-    const now = Date.now()
-    const timeSinceLastRefresh = now - lastRefreshTime
-    const refreshIntervalMs = refreshInterval * 60 * 1000
-
-    // If enough time has passed, refresh immediately
-    if (timeSinceLastRefresh >= refreshIntervalMs) {
-      refreshCurrentImage()
-      return
-    }
-
-    // Set up next refresh
-    const timeUntilNextRefresh = refreshIntervalMs - timeSinceLastRefresh
-    const timeout = setTimeout(() => {
-      refreshCurrentImage()
-    }, timeUntilNextRefresh)
-
-    return () => clearTimeout(timeout)
-  }, [autoRefresh, refreshInterval, lastRefresh, refreshCurrentImage])
-
-  if (!currentImage) {
+  // Render based on background type
+  if (backgroundType === 'gradient' || !currentImage) {
     return (
       <>
-        {/* Fallback gradient background */}
+        {/* Gradient background */}
         <div className={cn(
-          "fixed inset-0 z-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900",
+          "fixed inset-0 z-0 bg-gradient-to-br from-blue-900/50 via-slate-900 to-purple-900/50",
           className
         )} />
         {/* Overlay */}
         <div 
-          className="fixed inset-0 z-10 bg-black/20"
+          className="fixed inset-0 z-10 bg-black"
+          style={{ opacity: overlayOpacity / 100 }}
         />
       </>
     )
   }
 
-  const imageUrl = unsplashService.getOptimizedImageUrl(
-    currentImage,
-    typeof window !== 'undefined' ? window.innerWidth : 1920,
-    typeof window !== 'undefined' ? window.innerHeight : 1080
-  )
+  const imageUrl = currentImage.urls.full
 
   // Debug info
   console.log('BackgroundImage render:', {
     hasCurrentImage: !!currentImage,
-    imageUrl: currentImage ? imageUrl : null,
-    currentCategory: currentCategory.name
+    backgroundType,
+    backgroundOpacity
   })
 
   return (
@@ -101,16 +81,11 @@ export function BackgroundImage({ className }: BackgroundImageProps) {
       />
       
       {/* Attribution (required by Unsplash) */}
-      {currentImage && (
+      {currentImage && currentImage.user && (
         <div className="fixed bottom-2 right-2 z-10">
-          <a
-            href={unsplashService.getAttributionUrl(currentImage)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-white/60 hover:text-white/80 transition-colors bg-black/20 backdrop-blur-sm px-2 py-1 rounded"
-          >
-            Photo by {currentImage.user.name} on Unsplash
-          </a>
+          <span className="text-xs text-white/60 bg-black/20 backdrop-blur-sm px-2 py-1 rounded">
+            Photo by {currentImage.user.name}
+          </span>
         </div>
       )}
     </>

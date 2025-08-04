@@ -1,6 +1,6 @@
 // =============================================================================
 // USER PSEUDO COMPONENT
-// Affiche le pseudo utilisateur dans le header
+// Affiche le pseudo utilisateur dans le header - Connecté au store global
 // =============================================================================
 
 import { useState } from 'react'
@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { User, Edit } from 'lucide-react'
-import { useAppStore } from '@/store/useAppStore'
+import { useUser } from '@/features/user'
 import { cn } from '@/lib/utils'
 
 interface UserPseudoProps {
@@ -25,30 +25,37 @@ interface UserPseudoProps {
 
 export function UserPseudo({ className }: UserPseudoProps) {
   const [open, setOpen] = useState(false)
-  const [pseudo, setPseudo] = useState('')
+  const [inputValue, setInputValue] = useState('')
   
-  const { general, setLanguage } = useAppStore()
+  // Utiliser le hook User connecté au store global
+  const {
+    pseudo,
+    displayName,
+    shouldShowWelcomeDialog,
+    totalSessions,
+    setPseudo,
+    setWelcomeDialogOpen,
+    isLoggedIn
+  } = useUser()
   
-  // Temporary user state until we add it to the store
-  const [userPseudo, setUserPseudo] = useState<string | null>(localStorage.getItem('user-pseudo'))
-  const [isFirstVisit, setIsFirstVisit] = useState<boolean>(!localStorage.getItem('user-pseudo'))
-  
-  // Show dialog on first visit if no pseudo is set
-  const shouldShowDialog = isFirstVisit && !userPseudo
+  // Show dialog on first visit or when manually opened
+  const shouldShowDialog = shouldShowWelcomeDialog || open
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (pseudo.trim()) {
-      setUserPseudo(pseudo.trim())
-      localStorage.setItem('user-pseudo', pseudo.trim())
-      setIsFirstVisit(false)
+    if (inputValue.trim()) {
+      setPseudo(inputValue.trim())
       setOpen(false)
-      setPseudo('')
+      setInputValue('')
+      // Fermer le dialog de bienvenue si c'était le premier visit
+      if (shouldShowWelcomeDialog) {
+        setWelcomeDialogOpen(false)
+      }
     }
   }
   
   const handleEdit = () => {
-    setPseudo(userPseudo || '')
+    setInputValue(pseudo || '')
     setOpen(true)
   }
   
@@ -58,9 +65,14 @@ export function UserPseudo({ className }: UserPseudoProps) {
       <div className={cn("flex items-center gap-2", className)}>
         <User className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-medium">
-          {userPseudo || 'Anonymous'}
+          {displayName}
         </span>
-        {userPseudo && (
+        {totalSessions > 0 && (
+          <span className="text-xs text-muted-foreground">
+            ({totalSessions} sessions)
+          </span>
+        )}
+        {isLoggedIn && (
           <Button
             variant="ghost"
             size="sm"
@@ -75,7 +87,7 @@ export function UserPseudo({ className }: UserPseudoProps) {
       {/* Pseudo input dialog */}
       <Dialog open={open || shouldShowDialog} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          {!userPseudo && (
+          {!isLoggedIn && (
             <Button variant="ghost" size="sm" className="h-8 px-3">
               <User className="h-4 w-4 mr-2" />
               Set Pseudo
@@ -85,10 +97,10 @@ export function UserPseudo({ className }: UserPseudoProps) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {userPseudo ? 'Edit Pseudo' : 'Welcome to Deep Work Station!'}
+              {isLoggedIn ? 'Edit Pseudo' : 'Welcome to Deep Work Station!'}
             </DialogTitle>
             <DialogDescription>
-              {userPseudo 
+              {isLoggedIn 
                 ? 'Update your pseudo for session tracking'
                 : 'Please enter a pseudo to get started with your deep work journey'
               }
@@ -100,8 +112,8 @@ export function UserPseudo({ className }: UserPseudoProps) {
               <Label htmlFor="pseudo">Pseudo</Label>
               <Input
                 id="pseudo"
-                value={pseudo}
-                onChange={(e) => setPseudo(e.target.value)}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Enter your pseudo..."
                 autoFocus
                 required
@@ -111,7 +123,7 @@ export function UserPseudo({ className }: UserPseudoProps) {
             </div>
             
             <div className="flex justify-end gap-2">
-              {userPseudo && (
+              {isLoggedIn && (
                 <Button
                   type="button"
                   variant="outline"
@@ -120,9 +132,9 @@ export function UserPseudo({ className }: UserPseudoProps) {
                   Cancel
                 </Button>
               )}
-                              <Button type="submit" disabled={!pseudo.trim()}>
-                  {userPseudo ? 'Update' : 'Get Started'}
-                </Button>
+              <Button type="submit" disabled={!inputValue.trim()}>
+                {isLoggedIn ? 'Update' : 'Get Started'}
+              </Button>
             </div>
           </form>
         </DialogContent>

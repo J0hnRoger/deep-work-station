@@ -6,9 +6,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
 
+// Initialize app store
+import { useAppStore } from './store/useAppStore'
+
 import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
-import { initializeStores } from './store'
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -37,8 +39,8 @@ declare module '@tanstack/react-router' {
   }
 }
 
-// Initialize stores
-initializeStores()
+// Initialize the app store (triggers user initialization)
+useAppStore.getState().initializeApp()
 
 // Render the app
 const rootElement = document.getElementById('app')

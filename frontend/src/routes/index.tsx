@@ -1,10 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { TimerDisplay, TimerControls, TimerModeSelector } from '@/components/timer'
 import { CommandPalette } from '@/components/command-palette'
-import { BackgroundImage } from '@/components/background'
 import { AudioPlayer, PlaylistLoader } from '@/components/audio'
-import { UserPseudo } from '@/components/user-pseudo'
-import { SettingsDialog } from '@/components/settings'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -12,17 +9,9 @@ export const Route = createFileRoute('/')({
 
 function App() {
   return (
-    <div className="relative">
-      {/* Dynamic Background */}
-      <BackgroundImage />
+    <>
       {/* Command Palette */}
       <CommandPalette />
-      
-      {/* Header with User Pseudo and Settings */}
-      <header className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between">
-        <UserPseudo />
-        <SettingsDialog />
-      </header>
       
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[calc(100vh-80px)] relative z-20">
@@ -46,6 +35,6 @@ function App() {
           <AudioPlayer />
         </div>
       </div>
-    </div>
+    </>
   )
 }

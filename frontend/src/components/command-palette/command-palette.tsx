@@ -56,8 +56,7 @@ export function CommandPalette() {
   const setVolume = useAppStore(state => state.setVolume)
   const setEQPreset = useAppStore(state => state.setEQPreset)
   
-  // Settings actions
-  const openSettings = useAppStore(state => state.openSettings)
+  // Settings actions - placeholder for future implementation
   
   // Parse volume from input (e.g., "volume 50", "vol 75")
   const parseVolumeCommand = (input: string): number | null => {
@@ -88,7 +87,7 @@ export function CommandPalette() {
       icon: <Timer className="h-4 w-4" />,
       action: () => {
         switchMode('pomodoro')
-        startTimer('pomodoro')
+        startTimer()
         setOpen(false)
       },
       group: 'Timer'
@@ -100,7 +99,7 @@ export function CommandPalette() {
       icon: <Clock className="h-4 w-4" />,
       action: () => {
         switchMode('deep-work')
-        startTimer('deep-work')
+        startTimer()
         setOpen(false)
       },
       group: 'Timer'
@@ -112,7 +111,7 @@ export function CommandPalette() {
       icon: isRunning && !isPaused ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />,
       action: () => {
         if (!isRunning) {
-          startTimer(mode)
+          startTimer()
         } else if (isPaused) {
           resumeTimer()
         } else {
@@ -241,7 +240,8 @@ export function CommandPalette() {
     const timerValue = parseTimerCommand(input)
     if (timerValue !== null) {
       switchMode('custom')
-      startTimer('custom', timerValue)
+      // Note: Custom timer duration handling would be implemented in slice
+      startTimer()
       setOpen(false)
       return
     }
@@ -261,7 +261,7 @@ export function CommandPalette() {
         if (e.code === 'Space' && (e.metaKey || e.ctrlKey)) {
           e.preventDefault()
           if (!isRunning) {
-            startTimer(mode)
+            startTimer()
           } else if (isPaused) {
             resumeTimer()
           } else {
@@ -272,13 +272,13 @@ export function CommandPalette() {
         if (e.key === 't' && (e.metaKey || e.ctrlKey)) {
           e.preventDefault()
           switchMode('pomodoro')
-          startTimer('pomodoro')
+          startTimer()
         }
         
         if (e.key === 'd' && (e.metaKey || e.ctrlKey)) {
           e.preventDefault()
           switchMode('deep-work')
-          startTimer('deep-work')
+          startTimer()
         }
       }
     }

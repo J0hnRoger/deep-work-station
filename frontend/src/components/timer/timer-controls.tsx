@@ -10,7 +10,6 @@ interface TimerControlsProps {
 export function TimerControls({ className }: TimerControlsProps) {
   const isRunning = useAppStore(state => state.isRunning)
   const isPaused = useAppStore(state => state.isPaused)
-  const mode = useAppStore(state => state.mode)
   
   const startTimer = useAppStore(state => state.startTimer)
   const pauseTimer = useAppStore(state => state.pauseTimer)

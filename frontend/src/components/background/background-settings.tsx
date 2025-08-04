@@ -11,21 +11,62 @@ interface BackgroundSettingsProps {
 }
 
 export function BackgroundSettings({ className }: BackgroundSettingsProps) {
-  const {
-    currentCategory,
-    overlayOpacity,
-    blurIntensity,
-    autoRefresh,
-    refreshInterval,
-    isLoading,
-    setCurrentCategory,
-    setOverlayOpacity,
-    setBlurIntensity,
-    setAutoRefresh,
-    setRefreshInterval,
-    refreshCurrentImage,
-    getRandomImageFromCategory
-  } = useAppStore()
+  // Map to Settings slice properties (nested under background)
+  const backgroundOpacity = useAppStore(state => state.background.backgroundOpacity)
+  const blurAmount = useAppStore(state => state.background.blurAmount)
+  const currentBackground = useAppStore(state => state.background.currentBackground)
+  
+  // Actions from Settings slice
+  const setBackgroundOpacity = useAppStore(state => state.setBackgroundOpacity)
+  const setBlurAmount = useAppStore(state => state.setBlurAmount)
+  const setCurrentBackground = useAppStore(state => state.setCurrentBackground)
+  
+  // Derived values for backward compatibility
+  const overlayOpacity = 100 - backgroundOpacity
+  const blurIntensity = (blurAmount / 20) * 100 // Convert blur (0-20px) to percentage
+  
+  // Simplified category system - use currentBackground as category
+  const currentCategory = { id: currentBackground, name: currentBackground }
+  
+  // Loading state - simplified for now
+  const isLoading = false
+  
+  // Auto-refresh properties - placeholder values for now
+  const autoRefresh = false
+  const refreshInterval = 30
+  
+  // Actions for backward compatibility
+  const setCurrentCategory = (category: any) => {
+    setCurrentBackground(category.id)
+  }
+  
+  const getRandomImageFromCategory = (category: any) => {
+    console.log('getRandomImageFromCategory called for:', category)
+    // Placeholder - this would be implemented later
+  }
+  
+  const refreshCurrentImage = () => {
+    console.log('refreshCurrentImage called')
+    // Placeholder - this would be implemented later
+  }
+  
+  const setOverlayOpacity = (value: number) => {
+    setBackgroundOpacity(100 - value) // Inverse logic
+  }
+  
+  const setBlurIntensity = (value: number) => {
+    setBlurAmount((value / 100) * 20) // Convert percentage back to pixels
+  }
+  
+  const setAutoRefresh = (enabled: boolean) => {
+    console.log('setAutoRefresh called:', enabled)
+    // Placeholder - this would be implemented later
+  }
+  
+  const setRefreshInterval = (interval: number) => {
+    console.log('setRefreshInterval called:', interval)
+    // Placeholder - this would be implemented later
+  }
 
   return (
     <div className={cn('space-y-6', className)}>

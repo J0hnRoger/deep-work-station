@@ -22,12 +22,16 @@ import type { SessionTrackingSlice } from '@/features/session-tracking/sessionTy
 import { createSettingsSlice, subscribeSettingsSystem } from '@/features/settings/slices/settingsSlice'
 import type { SettingsSlice } from '@/features/settings/settingsTypes'
 
+import { createUserSlice, subscribeUserSystem } from '@/features/user/slices/userSlice'
+import type { UserSlice } from '@/features/user/userTypes'
+
 // Combined App Store Interface
 export interface AppStore extends 
   TimerSlice,
   AudioSlice,
   SessionTrackingSlice,
-  SettingsSlice {
+  SettingsSlice,
+  UserSlice {
   // Event-driven system
   globalEvents: DeepWorkEvent[]
   dispatchGlobalEvent: (event: DeepWorkEvent) => void
@@ -50,6 +54,7 @@ export const useAppStore = create<AppStore>()(
           const audioSlice = createAudioSlice(...a)
           const sessionSlice = createSessionTrackingSlice(...a)
           const settingsSlice = createSettingsSlice(...a)
+          const userSlice = createUserSlice(...a)
           
           return {
             // Combine all feature slices
@@ -57,6 +62,7 @@ export const useAppStore = create<AppStore>()(
             ...audioSlice,
             ...sessionSlice,
             ...settingsSlice,
+            ...userSlice,
           
           // Event system state
           globalEvents: [] as DeepWorkEvent[],
@@ -88,6 +94,7 @@ export const useAppStore = create<AppStore>()(
             // Initialize all features
             get().refreshTodayStats()
             get().refreshCurrentWeekStats()
+            get().initializeUser()
             
             // Setup system theme listener
             if (typeof window !== 'undefined' && window.matchMedia) {
@@ -159,7 +166,12 @@ export const useAppStore = create<AppStore>()(
             shortcuts: state.shortcuts,
             autoBackup: state.autoBackup,
             backupFrequency: state.backupFrequency,
-            lastBackupDate: state.lastBackupDate
+            lastBackupDate: state.lastBackupDate,
+            
+            // Persist User data
+            pseudo: state.pseudo,
+            profile: state.profile,
+            isFirstVisit: state.isFirstVisit
           })
         }
       )
@@ -185,6 +197,7 @@ useAppStore.subscribe(
     subscribeAudioSystem(events, state)
     subscribeSessionTrackingSystem(events, state)
     subscribeSettingsSystem(events, state)
+    subscribeUserSystem(events, state)
   }
 )
 

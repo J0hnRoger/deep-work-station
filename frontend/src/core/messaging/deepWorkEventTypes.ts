@@ -171,6 +171,36 @@ export interface DateChangedEvent extends DeepWorkEvent {
   }
 }
 
+// User Events
+export interface UserProfileCreatedEvent extends DeepWorkEvent {
+  type: 'user_profile_created'
+  payload: {
+    pseudo: string
+    profile: any
+  }
+}
+
+export interface UserProfileUpdatedEvent extends DeepWorkEvent {
+  type: 'user_profile_updated'
+  payload: {
+    pseudo: string
+    profile: any
+  }
+}
+
+export interface UserLoggedOutEvent extends DeepWorkEvent {
+  type: 'user_logged_out'
+  payload: {}
+}
+
+export interface UserSessionCompletedEvent extends DeepWorkEvent {
+  type: 'user_session_completed'
+  payload: {
+    sessionCount: number
+    pseudo: string
+  }
+}
+
 // Data Management Events
 export interface DataClearedEvent extends DeepWorkEvent {
   type: 'data_cleared'

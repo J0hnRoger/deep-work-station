@@ -6,7 +6,6 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
-    traefik.ingress.kubernetes.io/router.middlewares: "deep-work-station-security-headers@kubernetescrd"
 spec:
   tls:
   - hosts:

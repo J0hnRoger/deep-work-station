@@ -6,10 +6,9 @@ metadata:
 
 resources:
   - namespace.yaml
-  - deployment.yaml
+  - deployment.yaml  
   - service.yaml
   - ingress.yaml
-  - middleware.yaml
 
 labels:
   - pairs:

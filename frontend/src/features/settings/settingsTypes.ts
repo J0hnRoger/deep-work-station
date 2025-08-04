@@ -105,13 +105,13 @@ export interface SettingsState {
 
 // Default settings
 export const DEFAULT_BACKGROUND_SETTINGS: BackgroundSettings = {
-  currentBackground: 'gradient-blue',
-  backgroundType: 'gradient',
-  backgroundOpacity: 80,
+  currentBackground: 'nature',
+  backgroundType: 'image',
+  backgroundOpacity: 70,
   blurAmount: 0,
   
-  // Unsplash defaults
-  unsplashEnabled: false,
+  // Unsplash defaults - activé par défaut
+  unsplashEnabled: true,
   unsplashCategory: 'nature',
   autoRefreshUnsplash: false,
   refreshIntervalMinutes: 30,

@@ -96,6 +96,15 @@ export const useAppStore = create<AppStore>()(
             get().refreshCurrentWeekStats()
             get().initializeUser()
             
+            // Initialize Unsplash background if enabled and no image set
+            const state = get()
+            if (state.background.unsplashEnabled && !state.background.unsplashImageUrl) {
+              console.log('Initializing default Unsplash background...')
+              state.refreshUnsplashBackground().catch(error => {
+                console.warn('Failed to load initial Unsplash background:', error)
+              })
+            }
+            
             // Setup system theme listener
             if (typeof window !== 'undefined' && window.matchMedia) {
               const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')

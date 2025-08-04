@@ -1,7 +1,9 @@
 import { Experience } from '@/features/forest/components/3d/Experience'
+import { DebugInfo } from '@/features/forest/components/3d/DebugInfo'
 import { KeyboardControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { createFileRoute } from '@tanstack/react-router'
+import { useControls } from 'leva'
 
 export const Route = createFileRoute('/scene/')({
   component: ExperiencePage,
@@ -16,8 +18,16 @@ const keyboardMap = [
 ];
 
 function ExperiencePage() {
+  const { debugMode } = useControls("Map", {
+    debugMode: {
+      value: false,
+      label: "Debug Mode"
+    }
+  });
+
   return (
     <div className="h-screen w-screen">
+      <DebugInfo debugMode={debugMode} />
       <KeyboardControls map={keyboardMap}>
         <Canvas
           shadows
@@ -27,7 +37,7 @@ function ExperiencePage() {
           }}
         >
           <color attach="background" args={["#ececec"]} />
-          <Experience />
+          <Experience debugMode={debugMode} />
         </Canvas>
       </KeyboardControls>
     </div>

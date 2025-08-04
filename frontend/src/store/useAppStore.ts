@@ -24,6 +24,7 @@ import type { SettingsSlice } from '@/features/settings/settingsTypes'
 
 import { createUserSlice, subscribeUserSystem } from '@/features/user/slices/userSlice'
 import type { UserSlice } from '@/features/user/userTypes'
+import { createForestSlice, type ForestSlice } from '@/features/forest/slices/forestSlice'
 
 // Combined App Store Interface
 export interface AppStore extends 
@@ -31,6 +32,7 @@ export interface AppStore extends
   AudioSlice,
   SessionTrackingSlice,
   SettingsSlice,
+  ForestSlice,
   UserSlice {
   // Event-driven system
   globalEvents: DeepWorkEvent[]
@@ -55,6 +57,7 @@ export const useAppStore = create<AppStore>()(
           const sessionSlice = createSessionTrackingSlice(...a)
           const settingsSlice = createSettingsSlice(...a)
           const userSlice = createUserSlice(...a)
+          const forestSlice = createForestSlice(...a)
           
           return {
             // Combine all feature slices
@@ -63,6 +66,7 @@ export const useAppStore = create<AppStore>()(
             ...sessionSlice,
             ...settingsSlice,
             ...userSlice,
+            ...forestSlice,
           
           // Event system state
           globalEvents: [] as DeepWorkEvent[],

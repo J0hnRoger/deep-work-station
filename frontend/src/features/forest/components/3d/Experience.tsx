@@ -26,6 +26,10 @@ const maps = {
     scale: 0.4,
     position: [-4, 0, -6],
   },
+  walk_in_the_woods: {
+    scale: 10,
+    position: [0, 0, 0],
+  }
 };
 
 export const Experience = () => {

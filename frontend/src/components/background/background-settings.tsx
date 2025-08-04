@@ -3,8 +3,9 @@ import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAppStore } from '@/store/useAppStore'
 import { BACKGROUND_CATEGORIES } from '@/services/unsplash'
-import { RefreshCw, Image, Palette } from 'lucide-react'
+import { RefreshCw, Image, Palette, TestTube } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useState } from 'react'
 
 interface BackgroundSettingsProps {
   className?: string
@@ -20,6 +21,14 @@ export function BackgroundSettings({ className }: BackgroundSettingsProps) {
   const setBackgroundOpacity = useAppStore(state => state.setBackgroundOpacity)
   const setBlurAmount = useAppStore(state => state.setBlurAmount)
   const setCurrentBackground = useAppStore(state => state.setCurrentBackground)
+  const testUnsplashConnection = useAppStore(state => state.testUnsplashConnection)
+  const refreshUnsplashBackground = useAppStore(state => state.refreshUnsplashBackground)
+  const setUnsplashEnabled = useAppStore(state => state.setUnsplashEnabled)
+  const setUnsplashCategory = useAppStore(state => state.setUnsplashCategory)
+  
+  // Local state pour les tests
+  const [isTestingConnection, setIsTestingConnection] = useState(false)
+  const [testResult, setTestResult] = useState<string | null>(null)
   
   // Derived values for backward compatibility
   const overlayOpacity = 100 - backgroundOpacity
@@ -66,6 +75,33 @@ export function BackgroundSettings({ className }: BackgroundSettingsProps) {
   const setRefreshInterval = (interval: number) => {
     console.log('setRefreshInterval called:', interval)
     // Placeholder - this would be implemented later
+  }
+  
+  // Test de connexion Unsplash
+  const handleTestConnection = async () => {
+    setIsTestingConnection(true)
+    setTestResult(null)
+    
+    try {
+      const success = await testUnsplashConnection()
+      setTestResult(success ? '✅ Connexion réussie' : '❌ Échec de connexion')
+    } catch (error) {
+      setTestResult('❌ Erreur de connexion')
+    } finally {
+      setIsTestingConnection(false)
+    }
+  }
+  
+  // Test de récupération d'image
+  const handleTestImageFetch = async () => {
+    try {
+      setUnsplashEnabled(true)
+      setUnsplashCategory('nature')
+      await refreshUnsplashBackground()
+      setTestResult('✅ Image chargée depuis Unsplash')
+    } catch (error) {
+      setTestResult('❌ Échec du chargement d\'image')
+    }
   }
 
   return (
@@ -156,6 +192,47 @@ export function BackgroundSettings({ className }: BackgroundSettingsProps) {
         <p className="text-xs text-muted-foreground">
           Soften background for better focus
         </p>
+      </div>
+
+      {/* Unsplash Test Section */}
+      <div className="space-y-3 border-t pt-4">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium flex items-center gap-2">
+            <TestTube className="h-4 w-4" />
+            Test Unsplash Service
+          </label>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTestConnection}
+            disabled={isTestingConnection}
+            className="h-8 text-xs"
+          >
+            {isTestingConnection ? (
+              <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+            ) : (
+              <TestTube className="h-3 w-3 mr-1" />
+            )}
+            Test API
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTestImageFetch}
+            className="h-8 text-xs"
+          >
+            <Image className="h-3 w-3 mr-1" />
+            Load Image
+          </Button>
+        </div>
+        
+        {testResult && (
+          <p className="text-xs text-muted-foreground">{testResult}</p>
+        )}
       </div>
 
       {/* Auto Refresh Settings */}

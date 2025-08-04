@@ -10,6 +10,15 @@ export interface BackgroundSettings {
   blurAmount: number // 0-20px
   customBackgroundUrl?: string
   
+  // Unsplash integration
+  unsplashEnabled: boolean
+  unsplashCategory: string
+  unsplashImageId?: string
+  unsplashImageUrl?: string
+  unsplashAuthor?: string
+  autoRefreshUnsplash: boolean
+  refreshIntervalMinutes: number
+  
   // Animations
   enableAnimations: boolean
   particleEffects: boolean
@@ -100,6 +109,13 @@ export const DEFAULT_BACKGROUND_SETTINGS: BackgroundSettings = {
   backgroundType: 'gradient',
   backgroundOpacity: 80,
   blurAmount: 0,
+  
+  // Unsplash defaults
+  unsplashEnabled: false,
+  unsplashCategory: 'nature',
+  autoRefreshUnsplash: false,
+  refreshIntervalMinutes: 30,
+  
   enableAnimations: true,
   particleEffects: false,
   weatherEffects: false,
@@ -240,6 +256,13 @@ export interface SettingsActions {
   setReduceMotion: (enabled: boolean) => void
   setLowPowerMode: (enabled: boolean) => void
   
+  // Unsplash actions
+  setUnsplashEnabled: (enabled: boolean) => void
+  setUnsplashCategory: (category: string) => void
+  setUnsplashImage: (imageId: string, imageUrl: string, author: string) => void
+  setAutoRefreshUnsplash: (enabled: boolean) => void
+  setRefreshIntervalMinutes: (minutes: number) => void
+  
   // UI actions
   setTheme: (theme: UISettings['theme']) => void
   setAccentColor: (color: string) => void
@@ -287,6 +310,10 @@ export interface SettingsActions {
   resetAllSettings: () => void
   resetSection: (section: 'background' | 'ui' | 'general' | 'shortcuts') => void
   markUnsavedChanges: (hasChanges: boolean) => void
+  
+  // Unsplash helper methods
+  refreshUnsplashBackground: () => Promise<void>
+  testUnsplashConnection: () => Promise<boolean>
 }
 
 // Combined Settings Slice Type

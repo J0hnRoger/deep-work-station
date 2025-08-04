@@ -150,6 +150,17 @@ export interface ThemeChangedEvent extends DeepWorkEvent {
   }
 }
 
+export interface BackgroundChangedEvent extends DeepWorkEvent {
+  type: 'background_changed'
+  payload: {
+    type: 'gradient' | 'image' | 'unsplash' | 'custom'
+    imageId?: string
+    imageUrl?: string
+    author?: string
+    category?: string
+  }
+}
+
 // System Events
 export interface SystemThemeChangedEvent extends DeepWorkEvent {
   type: 'system_theme_changed'

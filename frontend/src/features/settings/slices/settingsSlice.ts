@@ -7,6 +7,7 @@ import { SettingsDomain, DEFAULT_BACKGROUND_SETTINGS, DEFAULT_UI_SETTINGS, DEFAU
 import type { SettingsSlice } from '../settingsTypes'
 import type { DeepWorkEvent } from '@/core/messaging/deepWorkEventTypes'
 import type { AppStore } from '@/store/useAppStore'
+import { backgroundService } from '../services/backgroundService'
 
 const initialState = {
   // Sections de configuration
@@ -30,8 +31,14 @@ const initialState = {
   canRedo: false
 }
 
-export const createSettingsSlice: StateCreator<AppStore, [], [], SettingsSlice> = (set, get) => ({
-  ...initialState,
+export const createSettingsSlice: StateCreator<AppStore, [], [], SettingsSlice> = (set, get) => {
+  // Initialiser le backgroundService avec le store
+  setTimeout(() => {
+    backgroundService.setStore(get())
+  }, 0)
+
+  return {
+    ...initialState,
   
   // Settings Actions
   // Background actions
@@ -102,6 +109,49 @@ export const createSettingsSlice: StateCreator<AppStore, [], [], SettingsSlice> 
   setLowPowerMode: (enabled) => {
     set(state => ({
       background: { ...state.background, lowPowerMode: enabled },
+      hasUnsavedChanges: true
+    }))
+  },
+  
+  // Unsplash actions
+  setUnsplashEnabled: (enabled) => {
+    set(state => ({
+      background: { ...state.background, unsplashEnabled: enabled },
+      hasUnsavedChanges: true
+    }))
+  },
+  
+  setUnsplashCategory: (category) => {
+    set(state => ({
+      background: { ...state.background, unsplashCategory: category },
+      hasUnsavedChanges: true
+    }))
+  },
+  
+  setUnsplashImage: (imageId, imageUrl, author) => {
+    set(state => ({
+      background: { 
+        ...state.background, 
+        unsplashImageId: imageId,
+        unsplashImageUrl: imageUrl,
+        unsplashAuthor: author,
+        backgroundType: 'image',
+        customBackgroundUrl: imageUrl
+      },
+      hasUnsavedChanges: true
+    }))
+  },
+  
+  setAutoRefreshUnsplash: (enabled) => {
+    set(state => ({
+      background: { ...state.background, autoRefreshUnsplash: enabled },
+      hasUnsavedChanges: true
+    }))
+  },
+  
+  setRefreshIntervalMinutes: (minutes) => {
+    set(state => ({
+      background: { ...state.background, refreshIntervalMinutes: Math.max(5, Math.min(180, minutes)) },
       hasUnsavedChanges: true
     }))
   },
@@ -408,8 +458,24 @@ export const createSettingsSlice: StateCreator<AppStore, [], [], SettingsSlice> 
   
   markUnsavedChanges: (hasChanges) => {
     set({ hasUnsavedChanges: hasChanges })
+  },
+  
+  // Unsplash helper methods
+  refreshUnsplashBackground: async () => {
+    const state = get()
+    if (state.background.unsplashEnabled) {
+      const success = await backgroundService.setUnsplashBackground()
+      if (!success) {
+        console.warn('Failed to refresh Unsplash background')
+      }
+    }
+  },
+  
+  testUnsplashConnection: async () => {
+    return await backgroundService.testConnection()
   }
-})
+  }
+}
 
 /**
  * Fonction d'abonnement aux événements pour le système Settings

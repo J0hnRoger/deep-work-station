@@ -59,7 +59,7 @@ export class BackgroundService {
     
     // Utiliser l'URL optimisée pour l'écran
     const optimizedUrl = unsplashService.getOptimizedImageUrl(image, 1920, 1080)
-    debugger
+
     // Mettre à jour le store
     state.setUnsplashImage(image.id, optimizedUrl, image.user.name)
     

@@ -62,7 +62,8 @@ export class ForestDomain {
     
     // Create spiral placement based on session count and hash
     const sessionIndex = existingTrees.length
-    let spiralRadius = Math.sqrt(sessionIndex) * 2
+    // Ensure minimum distance from center (where character spawns)
+    let spiralRadius = Math.max(4, Math.sqrt(sessionIndex) * 2) // Minimum 4 units from center
     let angle = normalizedHash * Math.PI * 2 + sessionIndex * 0.618 // golden ratio for nice distribution
     
     let x = Math.cos(angle) * spiralRadius
@@ -73,16 +74,20 @@ export class ForestDomain {
     x += (normalizedHash - 0.5) * durationVariation
     z += ((hash % 1000) / 1000 - 0.5) * durationVariation
     
-    // Ensure minimum distance from other trees
+    // Ensure minimum distance from other trees AND from center (character spawn)
     let attempts = 0
     while (attempts < 50) {
-      const tooClose = existingTrees.some(tree => {
+      const tooCloseToTrees = existingTrees.some(tree => {
         const dx = tree.position.x - x
         const dz = tree.position.z - z
         return Math.sqrt(dx * dx + dz * dz) < minDistance
       })
       
-      if (!tooClose) break
+      // Also check distance from center (0,0,0) where character spawns
+      const distanceFromCenter = Math.sqrt(x * x + z * z)
+      const tooCloseToCenter = distanceFromCenter < 3 // Minimum 3 units from center
+      
+      if (!tooCloseToTrees && !tooCloseToCenter) break
       
       // Adjust position
       angle += 0.1

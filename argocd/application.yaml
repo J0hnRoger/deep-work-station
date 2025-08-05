@@ -11,6 +11,11 @@ spec:
     repoURL: https://github.com/j0hnroger/deep-work-station.git
     targetRevision: HEAD
     path: deploy/manifests
+    plugin:
+      name: kustomize
+      env:
+        - name: KUSTOMIZE_VERSION
+          value: "v5.0.1"
   destination:
     server: https://kubernetes.default.svc
     namespace: deep-work-station

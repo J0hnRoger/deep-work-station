@@ -68,3 +68,53 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           target: production
+
+  update-manifests:
+    name: Update Kubernetes Manifests
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image tag
+        id: extract-tag
+        run: |
+          # Extract the SHA-based tag from the build output
+          IMAGE_TAG=$(echo "${{ needs.build-and-push.outputs.image-tag }}" | grep -o 'main-[a-f0-9]\{7\}' | head -1)
+          echo "image-tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "Found image tag: ${IMAGE_TAG}"
+
+      - name: Update kustomization.yaml
+        run: |
+          IMAGE_TAG=${{ steps.extract-tag.outputs.image-tag }}
+          echo "Updating kustomization.yaml with tag: ${IMAGE_TAG}"
+          
+          # Update the image tag in kustomization.yaml
+          sed -i "s/newTag: .*/newTag: ${IMAGE_TAG}/" deploy/manifests/kustomization.yaml
+          
+          # Verify the change
+          echo "Updated kustomization.yaml:"
+          grep -A 3 -B 3 "newTag:" deploy/manifests/kustomization.yaml
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          if git diff --exit-code deploy/manifests/kustomization.yaml; then
+            echo "No changes to commit"
+          else
+            git add deploy/manifests/kustomization.yaml
+            git commit -m "chore: update image tag to ${{ steps.extract-tag.outputs.image-tag }}
+            
+            Generated with CI/CD automation"
+            git push
+          fi

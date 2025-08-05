@@ -48,7 +48,7 @@ export const Tree = ({ tree, debugMode = false, showSessionInfo = false, ...prop
 
   return (
     <group 
-      position={[tree.position.x, tree.position.y, tree.position.z]} 
+      position={[tree.position.x, tree.position.y - 0.5, tree.position.z]} 
       scale={tree.scale}
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}

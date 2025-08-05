@@ -17,4 +17,4 @@ commonLabels:
 images:
   - name: deep-work-station
     newName: ghcr.io/j0hnroger/deep-work-station
-    newTag: main-75a6538
+    newTag: main-223e9f1

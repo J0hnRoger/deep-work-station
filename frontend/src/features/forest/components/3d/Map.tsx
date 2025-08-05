@@ -1,13 +1,19 @@
 import { useAnimations, useGLTF } from "@react-three/drei";
+import * as THREE from "three";
 import { RigidBody } from "@react-three/rapier";
 import { useEffect, useRef } from "react";
 
-export const Map = ({ model, ...props }) => {
+interface MapProps {
+  model: string;
+  [key: string]: any;
+}
+
+export const Map = ({ model, ...props }: MapProps) => {
   const { scene, animations } = useGLTF(model);
-  const group = useRef();
+  const group = useRef<THREE.Group>(null);
   const { actions } = useAnimations(animations, group);
   useEffect(() => {
-    scene.traverse((child) => {
+    scene.traverse((child: any) => {
       if (child.isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
@@ -17,9 +23,9 @@ export const Map = ({ model, ...props }) => {
 
   useEffect(() => {
     if (actions && animations.length > 0) {
-      actions[animations[0].name].play();
+      actions[animations[0].name]?.play();
     }
-  }, [actions]);
+  }, [actions, animations]);
 
   return (
     <group>

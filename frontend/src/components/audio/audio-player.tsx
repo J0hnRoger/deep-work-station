@@ -18,7 +18,6 @@ export function AudioPlayer({ className }: AudioPlayerProps) {
   const volume = useAppStore(state => state.volume)
   const eqPreset = useAppStore(state => state.eqPreset)
   const isLoading = useAppStore(state => state.isLoading)
-  const currentPlaylist = useAppStore(state => state.currentPlaylist)
   
   const play = useAppStore(state => state.play)
   const pause = useAppStore(state => state.pause)

@@ -24,7 +24,8 @@ import {
   Trees,
   Eye,
   EyeOff,
-  HelpCircle
+  HelpCircle,
+  RefreshCw
 } from 'lucide-react'
 
 interface Command {
@@ -66,6 +67,12 @@ export function CommandPalette() {
   const enterForestMode = useAppStore(state => state.enterForestMode)
   const exitForestMode = useAppStore(state => state.exitForestMode)
   const toggleInterface = useAppStore(state => state.toggleInterface)
+  
+  // Background actions
+  const unsplashCategory = useAppStore(state => state.background.unsplashCategory)
+  const setUnsplashEnabled = useAppStore(state => state.setUnsplashEnabled)
+  const setUnsplashCategory = useAppStore(state => state.setUnsplashCategory)
+  const refreshUnsplashBackground = useAppStore(state => state.refreshUnsplashBackground)
   
   // Parse volume from input (e.g., "volume 50", "vol 75")
   const parseVolumeCommand = (input: string): number | null => {
@@ -205,6 +212,7 @@ export function CommandPalette() {
     {
       id: 'forest-close',
       label: 'Exit Forest Mode',
+      shortcut: '⌘F',
       icon: <Timer className="h-4 w-4" />,
       action: () => {
         exitForestMode()
@@ -233,6 +241,26 @@ export function CommandPalette() {
         setOpen(false)
       },
       group: 'View'
+    },
+    
+    // Background commands
+    {
+      id: 'background-refresh',
+      label: 'Load New Background Image',
+      shortcut: '⌘R',
+      icon: <RefreshCw className="h-4 w-4" />,
+      action: async () => {
+        try {
+          // Use the same method as "Load Image" in settings
+          setUnsplashEnabled(true)
+          setUnsplashCategory(unsplashCategory || 'nature')
+          await refreshUnsplashBackground()
+        } catch (error) {
+          console.error('Failed to refresh background:', error)
+        }
+        setOpen(false)
+      },
+      group: 'Background'
     },
     
     // EQ Presets
@@ -323,7 +351,11 @@ export function CommandPalette() {
         
         if (e.key === 'f' && (e.metaKey || e.ctrlKey)) {
           e.preventDefault()
-          enterForestMode()
+          if (viewMode === 'forest') {
+            exitForestMode()
+          } else {
+            enterForestMode()
+          }
         }
         
         if (e.key === 'h' || e.key === 'H') {
@@ -347,6 +379,9 @@ export function CommandPalette() {
     
     // Show forest help only in forest mode
     if (command.id === 'forest-help' && viewMode !== 'forest') return false
+    
+    // Show background refresh always (it will enable Unsplash if needed)
+    // if (command.id === 'background-refresh' && (!unsplashEnabled || backgroundType !== 'image')) return false
     
     return (
       command.label.toLowerCase().includes(inputValue.toLowerCase()) ||

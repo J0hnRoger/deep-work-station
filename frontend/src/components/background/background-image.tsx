@@ -1,7 +1,8 @@
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, lazy, Suspense, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { cn } from '@/lib/utils'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import { RefreshCw } from 'lucide-react'
 
 // Lazy load the ForestExploration component
 const ForestExploration = lazy(() => 
@@ -19,11 +20,25 @@ export function BackgroundLayer({ className }: BackgroundLayerProps) {
   const backgroundType = useAppStore(state => state.background.backgroundType)
   const backgroundOpacity = useAppStore(state => state.background.backgroundOpacity)
   const customBackgroundUrl = useAppStore(state => state.background.customBackgroundUrl)
+  const unsplashImageUrl = useAppStore(state => state.background.unsplashImageUrl)
+  const unsplashAuthor = useAppStore(state => state.background.unsplashAuthor)
   const viewMode = useAppStore(state => state.ui.viewMode)
+  const interfaceVisible = useAppStore(state => state.ui.interfaceVisible)
+  const unsplashEnabled = useAppStore(state => state.background.unsplashEnabled)
+  const unsplashCategory = useAppStore(state => state.background.unsplashCategory)
+  const setUnsplashEnabled = useAppStore(state => state.setUnsplashEnabled)
+  const setUnsplashCategory = useAppStore(state => state.setUnsplashCategory)
+  const refreshUnsplashBackground = useAppStore(state => state.refreshUnsplashBackground)
+  
+  // Local state for refresh button
+  const [isRefreshing, setIsRefreshing] = useState(false)
   // const blurAmount = useAppStore(state => state.background.blurAmount) // For future blur implementation
   
-  // For backward compatibility, create derived values
-  const currentImage = customBackgroundUrl ? { 
+  // Create currentImage from available sources (prioritize Unsplash over custom)
+  const currentImage = unsplashImageUrl ? {
+    urls: { full: unsplashImageUrl },
+    user: { name: unsplashAuthor || 'Unsplash' }
+  } : customBackgroundUrl ? { 
     urls: { full: customBackgroundUrl },
     user: { name: 'Custom' }
   } : null
@@ -36,10 +51,11 @@ export function BackgroundLayer({ className }: BackgroundLayerProps) {
       backgroundType, 
       backgroundOpacity,
       hasCustomUrl: !!customBackgroundUrl,
+      hasUnsplashUrl: !!unsplashImageUrl,
       overlayOpacity,
       viewMode
     })
-  }, [currentBackground, backgroundType, backgroundOpacity, customBackgroundUrl, overlayOpacity, viewMode])
+  }, [currentBackground, backgroundType, backgroundOpacity, customBackgroundUrl, unsplashImageUrl, overlayOpacity, viewMode])
 
   // Render Forest mode first (highest priority)
   if (viewMode === 'forest') {
@@ -77,6 +93,27 @@ export function BackgroundLayer({ className }: BackgroundLayerProps) {
           className="fixed inset-0 z-10 bg-black"
           style={{ opacity: overlayOpacity / 100 }}
         />
+        
+        {/* Refresh button for gradient mode */}
+        {interfaceVisible && (
+          <div className="fixed bottom-2 right-2 z-50">
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                // For gradient mode, we could cycle through different gradient styles
+                // For now, just refresh the current gradient (future enhancement)
+                console.log('Refresh gradient requested')
+              }}
+              className="bg-black/20 backdrop-blur-sm text-white/70 hover:text-white hover:bg-black/30 p-2 rounded-full transition-all duration-200"
+              title="Change background style"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </motion.button>
+          </div>
+        )}
       </>
     )
   }
@@ -112,12 +149,52 @@ export function BackgroundLayer({ className }: BackgroundLayerProps) {
         }}
       />
       
-      {/* Attribution (required by Unsplash) */}
-      {currentImage && currentImage.user && (
-        <div className="fixed bottom-2 right-2 z-10">
-          <span className="text-xs text-white/60 bg-black/20 backdrop-blur-sm px-2 py-1 rounded">
-            Photo by {currentImage.user.name}
-          </span>
+      {/* Bottom right controls */}
+      {interfaceVisible && (
+        <div className="fixed bottom-2 right-2 z-50 flex items-center gap-2">
+          {/* Attribution (required by Unsplash) */}
+          {currentImage && currentImage.user && (
+            <span className="text-xs text-white/60 bg-black/20 backdrop-blur-sm px-2 py-1 rounded">
+              Photo by {currentImage.user.name}
+            </span>
+          )}
+          
+          {/* Refresh button - show if we have an image (Unsplash or custom) */}
+          {backgroundType === 'image' && currentImage && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={async () => {
+                if (isRefreshing) return
+                setIsRefreshing(true)
+                try {
+                  // Only refresh Unsplash if it's enabled, otherwise just log for custom images
+                  if (unsplashEnabled || unsplashImageUrl) {
+                    // Use the same method as "Load Image" in settings
+                    setUnsplashEnabled(true)
+                    setUnsplashCategory(unsplashCategory || 'nature')
+                    await refreshUnsplashBackground()
+                  } else {
+                    console.log('Custom image refresh requested - functionality could be added later')
+                  }
+                } finally {
+                  setIsRefreshing(false)
+                }
+              }}
+              disabled={isRefreshing}
+              className="bg-black/20 backdrop-blur-sm text-white/70 hover:text-white hover:bg-black/30 p-2 rounded-full transition-all duration-200 disabled:opacity-50"
+              title="Load new background image"
+            >
+              <RefreshCw 
+                className={cn(
+                  "h-4 w-4 transition-transform",
+                  isRefreshing && "animate-spin"
+                )} 
+              />
+            </motion.button>
+          )}
         </div>
       )}
     </>

@@ -293,6 +293,21 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
         get().stopInternalTimer()
       } else {
         set({ timerCurrentTime: newTime })
+        
+        // Dispatch timer tick event every 5 seconds for forest progress
+        if (newTime % 5 === 0 && currentState.currentSession) {
+          get().dispatchGlobalEvent({
+            type: 'timer_tick',
+            payload: { 
+              sessionId: currentState.currentSession.id,
+              currentTime: newTime,
+              plannedDuration: currentState.currentSession.plannedDuration * 60,
+              progress: 1 - (newTime / (currentState.currentSession.plannedDuration * 60))
+            },
+            timestamp: Date.now(),
+            id: `timer_tick_${Date.now()}`
+          })
+        }
       }
     }, 1000)
     

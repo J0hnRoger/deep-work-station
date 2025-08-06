@@ -1,17 +1,25 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { cn } from '@/lib/utils'
+import { AnimatePresence } from 'framer-motion'
 
-interface BackgroundImageProps {
+// Lazy load the ForestExploration component
+const ForestExploration = lazy(() => 
+  import('@/features/forest/components/ForestExploration')
+    .then(module => ({ default: module.ForestExploration }))
+)
+
+interface BackgroundLayerProps {
   className?: string
 }
 
-export function BackgroundImage({ className }: BackgroundImageProps) {
-  // Map to Settings slice properties (nested under background)
+export function BackgroundLayer({ className }: BackgroundLayerProps) {
+  // Settings slice properties
   const currentBackground = useAppStore(state => state.background.currentBackground)
   const backgroundType = useAppStore(state => state.background.backgroundType)
   const backgroundOpacity = useAppStore(state => state.background.backgroundOpacity)
   const customBackgroundUrl = useAppStore(state => state.background.customBackgroundUrl)
+  const viewMode = useAppStore(state => state.ui.viewMode)
   // const blurAmount = useAppStore(state => state.background.blurAmount) // For future blur implementation
   
   // For backward compatibility, create derived values
@@ -23,16 +31,39 @@ export function BackgroundImage({ className }: BackgroundImageProps) {
 
   // Debug and background change tracking
   useEffect(() => {
-    console.log('BackgroundImage: Component mounted/updated', { 
+    console.log('BackgroundLayer: Component mounted/updated', { 
       currentBackground, 
       backgroundType, 
       backgroundOpacity,
       hasCustomUrl: !!customBackgroundUrl,
-      overlayOpacity
+      overlayOpacity,
+      viewMode
     })
-  }, [currentBackground, backgroundType, backgroundOpacity, customBackgroundUrl, overlayOpacity])
+  }, [currentBackground, backgroundType, backgroundOpacity, customBackgroundUrl, overlayOpacity, viewMode])
 
-  // Render based on background type
+  // Render Forest mode first (highest priority)
+  if (viewMode === 'forest') {
+    return (
+      <div className={cn("fixed inset-0", className)}>
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-0 flex items-center justify-center bg-black text-white">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+                <p className="text-lg">Loading 3D...</p>
+              </div>
+            </div>
+          }
+        >
+          <AnimatePresence>
+            <ForestExploration />
+          </AnimatePresence>
+        </Suspense>
+      </div>
+    )
+  }
+  
+  // Render based on background type (Timer mode)
   if (backgroundType === 'gradient' || !currentImage) {
     return (
       <>
@@ -53,10 +84,11 @@ export function BackgroundImage({ className }: BackgroundImageProps) {
   const imageUrl = currentImage.urls.full
 
   // Debug info
-  console.log('BackgroundImage render:', {
+  console.log('BackgroundLayer render:', {
     hasCurrentImage: !!currentImage,
     backgroundType,
-    backgroundOpacity
+    backgroundOpacity,
+    viewMode
   })
 
   return (

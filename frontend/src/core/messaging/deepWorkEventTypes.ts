@@ -48,6 +48,16 @@ export interface TimerStoppedEvent extends DeepWorkEvent {
   }
 }
 
+export interface TimerTickEvent extends DeepWorkEvent {
+  type: 'timer_tick'
+  payload: {
+    sessionId: string
+    currentTime: number
+    plannedDuration: number
+    progress: number
+  }
+}
+
 export interface TimerCompletedEvent extends DeepWorkEvent {
   type: 'timer_completed'
   payload: {
@@ -241,6 +251,7 @@ export interface DataImportedEvent extends DeepWorkEvent {
 // Union type for all events
 export type DeepWorkEventUnion = 
   | TimerStartedEvent
+  | TimerTickEvent
   | TimerCompletedEvent
   | TimerPausedEvent // @deprecated
   | TimerResumedEvent // @deprecated  

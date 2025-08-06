@@ -22,6 +22,9 @@ export interface ForestTree {
   treeType: 'oak' | 'pine' | 'birch' | 'willow'
   scale: number // based on session duration
   health: number // 0-1, based on completion and quality
+  // Evolution stages based on session progress
+  evolutionStage: 'seed' | 'bush' | 'tree' // seed -> bush (mid-session) -> tree (completed)
+  sessionProgress?: number // 0-1, current session progress (for active sessions)
 }
 
 export interface ForestState {
@@ -37,6 +40,7 @@ export interface ForestActions {
   syncWithSessions: () => void
   transformSessionToTree: (session: TrackedSession) => ForestTree
   updateTreeFromSession: (sessionId: string) => void
+  updateActiveSessionProgress: (sessionId: string, progress: number) => void
   
   // Tree management
   addTree: (tree: ForestTree) => void
@@ -162,6 +166,26 @@ export class ForestDomain {
     
     return Math.max(0.1, Math.min(1.0, health))
   }
+  
+  /**
+   * Determine tree evolution stage based on session status and progress
+   * seed: session started (0-50% progress)
+   * bush: session mid-way (50-100% progress) 
+   * tree: session completed
+   */
+  static determineEvolutionStage(session: TrackedSession, sessionProgress?: number): 'seed' | 'bush' | 'tree' {
+    if (session.completed) {
+      return 'tree'
+    }
+    
+    // For active sessions, use progress
+    if (sessionProgress !== undefined) {
+      return sessionProgress >= 0.5 ? 'bush' : 'seed'
+    }
+    
+    // For incomplete sessions without progress, assume early stage
+    return 'seed'
+  }
 }
 
 const initialForestState: ForestState = {
@@ -201,6 +225,12 @@ export const createForestSlice: StateCreator<AppStore, [], [], ForestSlice> = (s
     const forestSize = get().forestSize
     const minDistance = get().minTreeDistance
     
+    // Check if this is an active session by looking at app state
+    const appState = get()
+    const isActiveSession = appState.currentSession?.id === session.id
+    const sessionProgress = isActiveSession && appState.currentSession ? 
+      1 - (appState.timerCurrentTime / (appState.currentSession.plannedDuration * 60)) : undefined
+    
     return {
       id: `tree_${session.id}`,
       sessionId: session.id,
@@ -212,7 +242,9 @@ export const createForestSlice: StateCreator<AppStore, [], [], ForestSlice> = (s
       plantedDate: session.date,
       treeType: ForestDomain.determineTreeType(session),
       scale: ForestDomain.calculateTreeScale(session),
-      health: ForestDomain.calculateTreeHealth(session)
+      health: ForestDomain.calculateTreeHealth(session),
+      evolutionStage: ForestDomain.determineEvolutionStage(session, sessionProgress),
+      sessionProgress: sessionProgress
     }
   },
   
@@ -263,6 +295,31 @@ export const createForestSlice: StateCreator<AppStore, [], [], ForestSlice> = (s
   
   setMinTreeDistance: (distance: number) => {
     set({ minTreeDistance: distance })
+  },
+  
+  // Update active session progress (called from timer system)
+  updateActiveSessionProgress: (sessionId: string, progress: number) => {
+    const trees = get().trees
+    const treeIndex = trees.findIndex(tree => tree.sessionId === sessionId)
+    
+    if (treeIndex !== -1) {
+      // const currentTree = trees[treeIndex] // For future use
+      const session = get().sessions?.find(s => s.id === sessionId)
+      
+      if (session) {
+        const newStage = ForestDomain.determineEvolutionStage(session, progress)
+        
+        set(state => ({
+          trees: state.trees.map((tree, index) => 
+            index === treeIndex ? {
+              ...tree,
+              sessionProgress: progress,
+              evolutionStage: newStage
+            } : tree
+          )
+        }))
+      }
+    }
   }
 })
 
@@ -284,6 +341,32 @@ export function subscribeForestSystem(
     state.syncWithSessions()
   }
   
+  // Créer immédiatement un arbre seed quand une session démarre
+  if (latestEvent.type === 'timer_started') {
+    console.log('Forest: Timer started, creating seed tree...')
+    // Create a temporary session object for the tree
+    const currentSession = state.currentSession
+    if (currentSession) {
+      const tempSession = {
+        id: currentSession.id,
+        date: new Date().toISOString().split('T')[0],
+        startTime: currentSession.startTime,
+        endTime: currentSession.startTime, // Will be updated when completed
+        duration: 0, // Will be updated as session progresses
+        plannedDuration: currentSession.plannedDuration,
+        mode: currentSession.mode,
+        completed: false
+      }
+      
+      // Check if tree already exists
+      const existingTree = state.trees.find(tree => tree.sessionId === currentSession.id)
+      if (!existingTree) {
+        const newTree = state.transformSessionToTree(tempSession)
+        state.addTree(newTree)
+      }
+    }
+  }
+  
   // Synchroniser aussi quand une session est mise à jour
   if (latestEvent.type === 'session_updated') {
     console.log('Forest: Session updated, updating tree...')
@@ -297,5 +380,15 @@ export function subscribeForestSystem(
   if (latestEvent.type === 'timer_completed') {
     console.log('Forest: Timer completed, will sync trees on next session_added event')
     // The timer will trigger session_added, so we'll sync then
+  }
+  
+  // Mettre à jour le progrès des sessions actives
+  if (latestEvent.type === 'timer_tick') {
+    const currentSession = state.currentSession
+    if (currentSession) {
+      const plannedDurationSeconds = currentSession.plannedDuration * 60
+      const progress = 1 - (state.timerCurrentTime / plannedDurationSeconds)
+      state.updateActiveSessionProgress(currentSession.id, progress)
+    }
   }
 }

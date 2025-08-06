@@ -11,17 +11,32 @@ interface TreeProps {
   [key: string]: any;
 }
 
-// Tree model paths based on type
+// Tree model paths based on type and evolution stage
 const TREE_MODELS = {
+  // Final tree models
   oak: '/models/trees/Oak.glb',
   pine: '/models/trees/Pine.glb', 
   birch: '/models/trees/Birch.glb',
-  willow: '/models/trees/Willow.glb'
+  willow: '/models/trees/Willow.glb',
+  // Evolution stages
+  seed: '/models/trees/seed.glb',
+  bush: '/models/trees/bush.glb'
 } as const;
 
 export const Tree = ({ tree, debugMode = false, showSessionInfo = false, ...props }: TreeProps) => {
   const [hovered, setHovered] = useState(false);
-  const modelPath = TREE_MODELS[tree.treeType] || TREE_MODELS.oak;
+  
+  // Select model based on evolution stage
+  const getModelPath = () => {
+    switch (tree.evolutionStage) {
+      case 'seed': return TREE_MODELS.seed
+      case 'bush': return TREE_MODELS.bush
+      case 'tree': return TREE_MODELS[tree.treeType] || TREE_MODELS.oak
+      default: return TREE_MODELS.seed
+    }
+  }
+  
+  const modelPath = getModelPath();
   const { scene } = useGLTF(modelPath) as any;
   const group = useRef<any>(null);
   const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene]);
@@ -63,10 +78,19 @@ export const Tree = ({ tree, debugMode = false, showSessionInfo = false, ...prop
           <div className="bg-black/80 text-white px-2 py-1 rounded text-xs whitespace-nowrap">
             <div>{tree.mode} • {tree.duration}min</div>
             <div>{tree.plantedDate}</div>
+            <div className="flex items-center gap-1">
+              {tree.evolutionStage === 'seed' && <span>🌱</span>}
+              {tree.evolutionStage === 'bush' && <span>🌿</span>}
+              {tree.evolutionStage === 'tree' && <span>🌳</span>}
+              <span className="capitalize">{tree.evolutionStage}</span>
+              {tree.sessionProgress && (
+                <span className="text-blue-400">({Math.round(tree.sessionProgress * 100)}%)</span>
+              )}
+            </div>
             {tree.completed ? (
               <div className="text-green-400">✓ Completed</div>
             ) : (
-              <div className="text-yellow-400">○ Incomplete</div>
+              <div className="text-yellow-400">○ In Progress</div>
             )}
           </div>
         </Html>
@@ -92,7 +116,7 @@ export const Tree = ({ tree, debugMode = false, showSessionInfo = false, ...prop
             anchorX="center"
             anchorY="middle"
           >
-            {`${tree.treeType} • ${tree.duration}min • ${tree.completed ? 'Complete' : 'Incomplete'}`}
+            {`${tree.evolutionStage} • ${tree.treeType} • ${tree.duration}min • ${tree.completed ? 'Complete' : 'In Progress'}`}
           </Text>
         </>
       )}

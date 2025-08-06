@@ -20,7 +20,11 @@ import {
   AudioLines,  
   Clock,
   Timer,
-  Settings
+  Settings,
+  Trees,
+  Eye,
+  EyeOff,
+  HelpCircle
 } from 'lucide-react'
 
 interface Command {
@@ -56,7 +60,12 @@ export function CommandPalette() {
   const setVolume = useAppStore(state => state.setVolume)
   const setEQPreset = useAppStore(state => state.setEQPreset)
   
-  // Settings actions - placeholder for future implementation
+  // UI/View mode actions
+  const viewMode = useAppStore(state => state.ui.viewMode)
+  const interfaceVisible = useAppStore(state => state.ui.interfaceVisible)
+  const enterForestMode = useAppStore(state => state.enterForestMode)
+  const exitForestMode = useAppStore(state => state.exitForestMode)
+  const toggleInterface = useAppStore(state => state.toggleInterface)
   
   // Parse volume from input (e.g., "volume 50", "vol 75")
   const parseVolumeCommand = (input: string): number | null => {
@@ -181,18 +190,49 @@ export function CommandPalette() {
       group: 'Audio'
     },
     
-    // Background commands
+    // Forest/View mode commands
     {
-      id: 'background-refresh',
-      label: 'Refresh Background',
-      shortcut: '⌘R',
-      icon: <Settings className="h-4 w-4" />,
+      id: 'forest-open',
+      label: 'Enter Forest Mode',
+      shortcut: '⌘F',
+      icon: <Trees className="h-4 w-4" />,
       action: () => {
-        // Background refresh functionality removed - will be reimplemented in settings
-        console.log('Background refresh requested')
+        enterForestMode()
         setOpen(false)
       },
-      group: 'Background'
+      group: 'View'
+    },
+    {
+      id: 'forest-close',
+      label: 'Exit Forest Mode',
+      icon: <Timer className="h-4 w-4" />,
+      action: () => {
+        exitForestMode()
+        setOpen(false)
+      },
+      group: 'View'
+    },
+    {
+      id: 'toggle-interface',
+      label: interfaceVisible ? 'Hide Interface' : 'Show Interface',
+      shortcut: 'H',
+      icon: interfaceVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />,
+      action: () => {
+        toggleInterface()
+        setOpen(false)
+      },
+      group: 'View'
+    },
+    {
+      id: 'forest-help',
+      label: 'Forest Controls Help',
+      icon: <HelpCircle className="h-4 w-4" />,
+      action: () => {
+        // This will show help overlay in forest mode
+        console.log('Forest help requested')
+        setOpen(false)
+      },
+      group: 'View'
     },
     
     // EQ Presets
@@ -280,18 +320,39 @@ export function CommandPalette() {
           switchMode('deep-work')
           startTimer()
         }
+        
+        if (e.key === 'f' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault()
+          enterForestMode()
+        }
+        
+        if (e.key === 'h' || e.key === 'H') {
+          if (!e.metaKey && !e.ctrlKey && !e.altKey) {
+            e.preventDefault()
+            toggleInterface()
+          }
+        }
       }
     }
     
     document.addEventListener('keydown', down)
     return () => document.removeEventListener('keydown', down)
-  }, [open, isRunning, isPaused, mode, startTimer, pauseTimer, resumeTimer, switchMode])
+  }, [open, isRunning, isPaused, mode, startTimer, pauseTimer, resumeTimer, switchMode, enterForestMode, toggleInterface])
   
-  // Filter commands based on input
-  const filteredCommands = commands.filter(command =>
-    command.label.toLowerCase().includes(inputValue.toLowerCase()) ||
-    command.group.toLowerCase().includes(inputValue.toLowerCase())
-  )
+  // Filter commands based on input and current mode
+  const filteredCommands = commands.filter(command => {
+    // Hide forest-close in timer mode, and forest-open in forest mode
+    if (viewMode === 'timer' && command.id === 'forest-close') return false
+    if (viewMode === 'forest' && command.id === 'forest-open') return false
+    
+    // Show forest help only in forest mode
+    if (command.id === 'forest-help' && viewMode !== 'forest') return false
+    
+    return (
+      command.label.toLowerCase().includes(inputValue.toLowerCase()) ||
+      command.group.toLowerCase().includes(inputValue.toLowerCase())
+    )
+  })
   
   // Group commands
   const groupedCommands = filteredCommands.reduce((acc, command) => {

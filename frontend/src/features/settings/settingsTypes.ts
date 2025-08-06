@@ -42,6 +42,10 @@ export interface UISettings {
   hideControls: boolean
   fullscreenMode: boolean
   
+  // View modes
+  viewMode: 'timer' | 'forest'
+  interfaceVisible: boolean
+  
   // Notifications
   enableNotifications: boolean
   soundEnabled: boolean
@@ -132,6 +136,8 @@ export const DEFAULT_UI_SETTINGS: UISettings = {
   showSeconds: true,
   hideControls: false,
   fullscreenMode: false,
+  viewMode: 'timer',
+  interfaceVisible: true,
   enableNotifications: true,
   soundEnabled: true,
   notificationVolume: 70,
@@ -272,6 +278,14 @@ export interface SettingsActions {
   setShowSeconds: (enabled: boolean) => void
   setHideControls: (enabled: boolean) => void
   setFullscreenMode: (enabled: boolean) => void
+  
+  // View mode actions
+  setViewMode: (mode: UISettings['viewMode']) => void
+  enterForestMode: () => void
+  exitForestMode: () => void
+  toggleInterface: () => void
+  setInterfaceVisible: (visible: boolean) => void
+  
   setEnableNotifications: (enabled: boolean) => void
   setSoundEnabled: (enabled: boolean) => void
   setNotificationVolume: (volume: number) => void

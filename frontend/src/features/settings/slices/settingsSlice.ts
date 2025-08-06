@@ -223,6 +223,42 @@ export const createSettingsSlice: StateCreator<AppStore, [], [], SettingsSlice> 
     }))
   },
   
+  // View mode actions
+  setViewMode: (mode) => {
+    set(state => ({
+      ui: { ...state.ui, viewMode: mode },
+      hasUnsavedChanges: true
+    }))
+  },
+  
+  enterForestMode: () => {
+    set(state => ({
+      ui: { ...state.ui, viewMode: 'forest' },
+      hasUnsavedChanges: true
+    }))
+  },
+  
+  exitForestMode: () => {
+    set(state => ({
+      ui: { ...state.ui, viewMode: 'timer' },
+      hasUnsavedChanges: true
+    }))
+  },
+  
+  toggleInterface: () => {
+    set(state => ({
+      ui: { ...state.ui, interfaceVisible: !state.ui.interfaceVisible },
+      hasUnsavedChanges: true
+    }))
+  },
+  
+  setInterfaceVisible: (visible) => {
+    set(state => ({
+      ui: { ...state.ui, interfaceVisible: visible },
+      hasUnsavedChanges: true
+    }))
+  },
+  
   setEnableNotifications: (enabled) => {
     set(state => ({
       ui: { ...state.ui, enableNotifications: enabled },
@@ -445,7 +481,14 @@ export const createSettingsSlice: StateCreator<AppStore, [], [], SettingsSlice> 
         set({ background: DEFAULT_BACKGROUND_SETTINGS, hasUnsavedChanges: true })
         break
       case 'ui':
-        set({ ui: DEFAULT_UI_SETTINGS, hasUnsavedChanges: true })
+        set({ 
+          ui: { 
+            ...DEFAULT_UI_SETTINGS, 
+            viewMode: 'timer', // Always reset to timer mode
+            interfaceVisible: true 
+          }, 
+          hasUnsavedChanges: true 
+        })
         break
       case 'general':
         set({ general: DEFAULT_GENERAL_SETTINGS, hasUnsavedChanges: true })

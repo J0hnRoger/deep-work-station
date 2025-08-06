@@ -233,7 +233,11 @@ export const createSettingsSlice: StateCreator<AppStore, [], [], SettingsSlice> 
   
   enterForestMode: () => {
     set(state => ({
-      ui: { ...state.ui, viewMode: 'forest' },
+      ui: { 
+        ...state.ui, 
+        viewMode: 'forest',
+        interfaceVisible: true // Always show interface when entering forest mode
+      },
       hasUnsavedChanges: true
     }))
   },

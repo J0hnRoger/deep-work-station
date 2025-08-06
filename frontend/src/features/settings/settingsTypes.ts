@@ -79,6 +79,7 @@ export interface KeyboardShortcuts {
   skipSession: string
   openSettings: string
   toggleFullscreen: string
+  toggleInterface: string
   volumeUp: string
   volumeDown: string
   nextTrack: string
@@ -137,7 +138,7 @@ export const DEFAULT_UI_SETTINGS: UISettings = {
   hideControls: false,
   fullscreenMode: false,
   viewMode: 'timer',
-  interfaceVisible: true,
+  interfaceVisible: true, // Always start with interface visible by default
   enableNotifications: true,
   soundEnabled: true,
   notificationVolume: 70,
@@ -165,6 +166,7 @@ export const DEFAULT_KEYBOARD_SHORTCUTS: KeyboardShortcuts = {
   skipSession: 'Tab',
   openSettings: 'Ctrl+,',
   toggleFullscreen: 'F11',
+  toggleInterface: 'Ctrl+H',
   volumeUp: 'ArrowUp',
   volumeDown: 'ArrowDown',
   nextTrack: 'ArrowRight',

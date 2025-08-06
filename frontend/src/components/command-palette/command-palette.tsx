@@ -215,7 +215,7 @@ export function CommandPalette() {
     {
       id: 'toggle-interface',
       label: interfaceVisible ? 'Hide Interface' : 'Show Interface',
-      shortcut: 'H',
+      shortcut: '⌘H',
       icon: interfaceVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />,
       action: () => {
         toggleInterface()
@@ -327,7 +327,7 @@ export function CommandPalette() {
         }
         
         if (e.key === 'h' || e.key === 'H') {
-          if (!e.metaKey && !e.ctrlKey && !e.altKey) {
+          if (e.metaKey || e.ctrlKey) {
             e.preventDefault()
             toggleInterface()
           }

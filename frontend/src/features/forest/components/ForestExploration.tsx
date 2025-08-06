@@ -44,8 +44,8 @@ export function ForestExploration({ className }: ForestExplorationProps) {
         return
       }
       
-      // H - Toggle interface
-      if (e.key === 'h' || e.key === 'H') {
+      // Ctrl+H - Toggle interface
+      if ((e.key === 'h' || e.key === 'H') && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
         toggleInterface()
         return
@@ -112,22 +112,25 @@ export function ForestExploration({ className }: ForestExplorationProps) {
           )}
         </AnimatePresence>
         
-        {/* Help overlay - shown on first forest mode or when interface is visible */}
+        {/* Help overlay - always shown when interface is visible */}
         <AnimatePresence>
           {interfaceVisible && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute top-4 right-4 z-30 bg-black/70 backdrop-blur-sm rounded-lg p-4 text-white text-sm max-w-xs"
+              className="absolute top-4 right-4 z-30 bg-black/80 backdrop-blur-sm rounded-lg p-4 text-white text-sm max-w-xs border border-white/20"
             >
-              <h3 className="font-semibold mb-2">Forest Controls</h3>
+              <h3 className="font-semibold mb-2 text-green-400">🌲 Forest Mode</h3>
               <div className="space-y-1 text-xs">
-                <p><kbd className="px-1 py-0.5 bg-white/20 rounded">W A S D</kbd> Move</p>
-                <p><kbd className="px-1 py-0.5 bg-white/20 rounded">Mouse</kbd> Look around</p>
-                <p><kbd className="px-1 py-0.5 bg-white/20 rounded">H</kbd> Toggle interface</p>
-                <p><kbd className="px-1 py-0.5 bg-white/20 rounded">Esc</kbd> Release cursor</p>
-                <p><kbd className="px-1 py-0.5 bg-white/20 rounded">Ctrl+K</kbd> Command palette</p>
+                <p><kbd className="px-1 py-0.5 bg-white/20 rounded text-black font-mono">W A S D</kbd> Move around</p>
+                <p><kbd className="px-1 py-0.5 bg-white/20 rounded text-black font-mono">Mouse</kbd> Look around</p>
+                <p><kbd className="px-1 py-0.5 bg-white/20 rounded text-black font-mono">Ctrl+H</kbd> Toggle this interface</p>
+                <p><kbd className="px-1 py-0.5 bg-white/20 rounded text-black font-mono">Esc</kbd> Release cursor</p>
+                <p><kbd className="px-1 py-0.5 bg-white/20 rounded text-black font-mono">Ctrl+K</kbd> Command palette</p>
+              </div>
+              <div className="mt-3 pt-2 border-t border-white/20 text-xs text-gray-300">
+                💡 Complete focus sessions to grow trees!
               </div>
             </motion.div>
           )}

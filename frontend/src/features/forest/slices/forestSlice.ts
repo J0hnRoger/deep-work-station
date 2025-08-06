@@ -307,7 +307,20 @@ export const createForestSlice: StateCreator<AppStore, [], [], ForestSlice> = (s
       const session = get().sessions?.find(s => s.id === sessionId)
       
       if (session) {
+        const currentTree = trees[treeIndex]
         const newStage = ForestDomain.determineEvolutionStage(session, progress)
+        
+        // Log evolution changes for debugging
+        if (currentTree.evolutionStage !== newStage) {
+          console.log(`🌳 Tree evolution detected:`, {
+            sessionId,
+            progress: Math.round(progress * 100) + '%',
+            oldStage: currentTree.evolutionStage,
+            newStage: newStage,
+            sessionMode: session.mode,
+            sessionDuration: session.duration / 60 + 'min'
+          })
+        }
         
         set(state => ({
           trees: state.trees.map((tree, index) => 
@@ -382,13 +395,48 @@ export function subscribeForestSystem(
     // The timer will trigger session_added, so we'll sync then
   }
   
-  // Mettre à jour le progrès des sessions actives
-  if (latestEvent.type === 'timer_tick') {
-    const currentSession = state.currentSession
-    if (currentSession) {
-      const plannedDurationSeconds = currentSession.plannedDuration * 60
-      const progress = 1 - (state.timerCurrentTime / plannedDurationSeconds)
-      state.updateActiveSessionProgress(currentSession.id, progress)
+  // Optimized forest evolution events - no more frequent timer_tick
+  
+  // Update tree to bush stage at mid-point (50%)
+  if (latestEvent.type === 'timer_mid') {
+    const { sessionId } = latestEvent.payload
+    console.log('Forest: Timer mid-point reached, evolving seed → bush...')
+    // Force evolution to bush stage
+    const trees = state.trees
+    const treeIndex = trees.findIndex(tree => tree.sessionId === sessionId)
+    
+    if (treeIndex !== -1) {
+      // Update the specific tree to bush stage
+      const updatedTree = {
+        ...trees[treeIndex],
+        evolutionStage: 'bush' as const,
+        sessionProgress: 0.5
+      }
+      
+      state.trees[treeIndex] = updatedTree
+    }
+  }
+  
+  // Complete tree evolution at timer end
+  if (latestEvent.type === 'timer_end') {
+    const { sessionId, completed } = latestEvent.payload
+    console.log('Forest: Timer ended, finalizing tree evolution...')
+    
+    if (completed) {
+      // Force evolution to final tree stage
+      const treeIndex = state.trees.findIndex(tree => tree.sessionId === sessionId)
+      
+      if (treeIndex !== -1) {
+        // Update the specific tree to final tree stage
+        const updatedTree = {
+          ...state.trees[treeIndex],
+          evolutionStage: 'tree' as const,
+          sessionProgress: 1.0,
+          completed: true
+        }
+        
+        state.trees[treeIndex] = updatedTree
+      }
     }
   }
 }

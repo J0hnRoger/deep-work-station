@@ -74,8 +74,8 @@ export const DEFAULT_TIMER_PRESETS: TimerPreset[] = [
   {
     id: 'custom',
     name: 'Custom',
-    workDuration: 30,
-    breakDuration: 5,
+    workDuration: 1,
+    breakDuration: 1,
     color: '#8b5cf6'
   }
 ]

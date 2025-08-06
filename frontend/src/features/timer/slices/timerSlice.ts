@@ -18,7 +18,7 @@ const initialState = {
   // Configuration
   mode: 'deep-work' as const,
   currentPreset: DEFAULT_TIMER_PRESETS[1], // deep-work as default
-  customDuration: 30,
+  customDuration: 0.33, // 20 seconds for testing (0.33 minutes)
   
   // Break management
   isBreak: false,
@@ -257,16 +257,38 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
   switchMode: (mode) => {
     const preset = DEFAULT_TIMER_PRESETS.find(p => p.id === mode)
     if (preset) {
+      const state = get()
+      
+      // For custom mode, use the customDuration from state instead of preset
+      const workDuration = mode === 'custom' ? state.customDuration : preset.workDuration
+      const customPreset = mode === 'custom' ? {
+        ...preset,
+        workDuration: workDuration
+      } : preset
+      
       set({
         mode,
-        currentPreset: preset,
-        timerCurrentTime: preset.workDuration * 60
+        currentPreset: customPreset,
+        timerCurrentTime: workDuration * 60
       })
     }
   },
   
   setCustomDuration: (minutes) => {
     set({ customDuration: minutes })
+    
+    // If we're currently in custom mode, update the current preset and timer
+    const state = get()
+    if (state.mode === 'custom') {
+      const customPreset = {
+        ...state.currentPreset,
+        workDuration: minutes
+      }
+      set({
+        currentPreset: customPreset,
+        timerCurrentTime: minutes * 60
+      })
+    }
   },
   
   updateTimerCurrentTime: (time) => {
@@ -279,6 +301,9 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
       clearInterval(state.timerInterval)
     }
     
+    // Track mid-point for forest evolution (once per session)
+    let midPointDispatched = false
+    
     const interval = setInterval(() => {
       const currentState = get()
       if (!currentState.isRunning || currentState.isPaused) {
@@ -286,27 +311,45 @@ export const createTimerSlice: StateCreator<AppStore, [], [], TimerSlice> = (set
       }
       
       const newTime = currentState.timerCurrentTime - 1
+      const currentSession = currentState.currentSession
       
       if (newTime <= 0) {
-        // Timer completed
+        // Timer completed - dispatch timer_end
+        if (currentSession) {
+          get().dispatchGlobalEvent({
+            type: 'timer_end',
+            payload: {
+              sessionId: currentSession.id,
+              mode: currentSession.mode,
+              actualDuration: currentSession.plannedDuration * 60,
+              completed: true
+            },
+            timestamp: Date.now(),
+            id: `timer_end_${Date.now()}`
+          })
+        }
         get().completeSession()
         get().stopInternalTimer()
       } else {
         set({ timerCurrentTime: newTime })
         
-        // Dispatch timer tick event every 5 seconds for forest progress
-        if (newTime % 5 === 0 && currentState.currentSession) {
-          get().dispatchGlobalEvent({
-            type: 'timer_tick',
-            payload: { 
-              sessionId: currentState.currentSession.id,
-              currentTime: newTime,
-              plannedDuration: currentState.currentSession.plannedDuration * 60,
-              progress: 1 - (newTime / (currentState.currentSession.plannedDuration * 60))
-            },
-            timestamp: Date.now(),
-            id: `timer_tick_${Date.now()}`
-          })
+        // Check for mid-point (50%) and dispatch timer_mid event once
+        if (currentSession && !midPointDispatched) {
+          const progress = 1 - (newTime / (currentSession.plannedDuration * 60))
+          if (progress >= 0.5) {
+            midPointDispatched = true
+            get().dispatchGlobalEvent({
+              type: 'timer_mid',
+              payload: {
+                sessionId: currentSession.id,
+                mode: currentSession.mode,
+                plannedDuration: currentSession.plannedDuration,
+                progress: progress
+              },
+              timestamp: Date.now(),
+              id: `timer_mid_${Date.now()}`
+            })
+          }
         }
       }
     }, 1000)

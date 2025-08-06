@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Settings } from 'lucide-react'
 import { BackgroundSettings } from '@/components/background'
+import { AudioSettings } from '@/components/audio/audio-settings'
 import { cn } from '@/lib/utils'
 
 interface SettingsDialogProps {
@@ -86,9 +87,7 @@ export function SettingsDialog({ className }: SettingsDialogProps) {
             {activeTab === 'audio' && (
               <div>
                 <h3 className="text-lg font-semibold mb-4">Audio Settings</h3>
-                <div className="text-muted-foreground">
-                  Audio settings will be implemented here.
-                </div>
+                <AudioSettings />
               </div>
             )}
             

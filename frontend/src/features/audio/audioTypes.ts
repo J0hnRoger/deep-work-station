@@ -50,6 +50,10 @@ export interface AudioState {
   autoStopOnTimerComplete: boolean
   focusPlaylistId: string | null
   breakPlaylistId: string | null
+  
+  // Timer-specific loop behavior
+  loopDuringTimer: boolean // Force loop mode while timer is active
+  originalRepeatMode: 'none' | 'one' | 'all' | null // Save user's original repeat mode
 }
 
 // Audio Actions Types
@@ -92,9 +96,17 @@ export interface AudioActions {
   setFocusPlaylistId: (playlistId: string) => void
   setBreakPlaylistId: (playlistId: string) => void
   
+  // Timer loop controls
+  setLoopDuringTimer: (enabled: boolean) => void
+  enableTimerLoop: () => void // Enable loop when timer starts
+  disableTimerLoop: () => void // Restore original repeat mode when timer ends
+  
   // Loading states
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
+  
+  // Track end handling
+  onTrackEnd: () => void
 }
 
 // Audio Domain Logic

@@ -48,6 +48,28 @@ export interface TimerStoppedEvent extends DeepWorkEvent {
   }
 }
 
+// New optimized timer events for forest evolution
+export interface TimerMidEvent extends DeepWorkEvent {
+  type: 'timer_mid'
+  payload: {
+    sessionId: string
+    mode: 'pomodoro' | 'deep-work' | 'custom'
+    plannedDuration: number
+    progress: number // Should be ~0.5
+  }
+}
+
+export interface TimerEndEvent extends DeepWorkEvent {
+  type: 'timer_end'
+  payload: {
+    sessionId: string
+    mode: 'pomodoro' | 'deep-work' | 'custom'
+    actualDuration: number
+    completed: boolean
+  }
+}
+
+// @deprecated - Use timer_mid and timer_end for forest evolution instead
 export interface TimerTickEvent extends DeepWorkEvent {
   type: 'timer_tick'
   payload: {
@@ -251,7 +273,9 @@ export interface DataImportedEvent extends DeepWorkEvent {
 // Union type for all events
 export type DeepWorkEventUnion = 
   | TimerStartedEvent
-  | TimerTickEvent
+  | TimerMidEvent
+  | TimerEndEvent
+  | TimerTickEvent // @deprecated
   | TimerCompletedEvent
   | TimerPausedEvent // @deprecated
   | TimerResumedEvent // @deprecated  

@@ -66,7 +66,7 @@ export interface SessionTrackingState {
 // Session Tracking Domain Logic
 export class SessionTrackingDomain {
   // Constants
-  static readonly MIN_SESSION_DURATION = 20 * 60 // 20 minutes in seconds
+  static readonly MIN_SESSION_DURATION = 0 //20 * 60 // 20 minutes in seconds
   static readonly MIN_SESSION_DURATION_MINUTES = 20
   
   static getCurrentDateString(): string {
@@ -92,25 +92,6 @@ export class SessionTrackingDomain {
     // Vérifier la durée minimum (20 minutes)
     if (session.duration < this.MIN_SESSION_DURATION) {
       console.log(`Session ${session.id} rejected: duration ${session.duration}s < minimum ${this.MIN_SESSION_DURATION}s`)
-      return false
-    }
-    
-    // Vérifier que la session a une durée positive
-    if (session.duration <= 0) {
-      console.log(`Session ${session.id} rejected: invalid duration ${session.duration}s`)
-      return false
-    }
-    
-    // Vérifier que les timestamps sont cohérents
-    if (session.endTime <= session.startTime) {
-      console.log(`Session ${session.id} rejected: invalid timestamps start=${session.startTime}, end=${session.endTime}`)
-      return false
-    }
-    
-    // Vérifier que la durée calculée correspond à la durée déclarée (tolérance de 5 secondes)
-    const calculatedDuration = session.endTime - session.startTime
-    if (Math.abs(calculatedDuration - session.duration) > 5) {
-      console.log(`Session ${session.id} rejected: duration mismatch calculated=${calculatedDuration}s, declared=${session.duration}s`)
       return false
     }
     

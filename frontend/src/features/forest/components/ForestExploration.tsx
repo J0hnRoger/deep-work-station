@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { KeyboardControls } from '@react-three/drei'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -19,7 +19,7 @@ interface ForestExplorationProps {
 }
 
 export function ForestExploration({ className }: ForestExplorationProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  // Remove canvasRef as we no longer need pointer lock
   
   // Store selectors
   const viewMode = useAppStore(state => state.ui.viewMode)
@@ -39,14 +39,6 @@ export function ForestExploration({ className }: ForestExplorationProps) {
     if (viewMode !== 'forest') return
     
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape - Release pointer lock (don't exit forest mode)
-      if (e.key === 'Escape') {
-        if (document.pointerLockElement) {
-          document.exitPointerLock()
-        }
-        return
-      }
-      
       // Ctrl+H - Toggle interface
       if ((e.key === 'h' || e.key === 'H') && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
@@ -71,26 +63,9 @@ export function ForestExploration({ className }: ForestExplorationProps) {
     
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [viewMode, toggleInterface])
+  }, [viewMode, toggleInterface, exitForestMode])
   
-  // Handle pointer lock on canvas click
-  const handleCanvasClick = () => {
-    if (viewMode === 'forest' && canvasRef.current) {
-      canvasRef.current.requestPointerLock()
-    }
-  }
-  
-  // Auto-request pointer lock when entering forest mode
-  useEffect(() => {
-    if (viewMode === 'forest' && canvasRef.current) {
-      // Small delay to ensure canvas is ready
-      setTimeout(() => {
-        if (canvasRef.current) {
-          canvasRef.current.requestPointerLock()
-        }
-      }, 100)
-    }
-  }, [viewMode])
+  // Remove all pointer lock logic
   
   if (viewMode !== 'forest') {
     return null
@@ -145,11 +120,13 @@ export function ForestExploration({ className }: ForestExplorationProps) {
                 <p><kbd className="px-1 py-0.5 bg-white/20 rounded text-black font-mono">Ctrl+H</kbd> Toggle this interface</p>
                 <p><kbd className="px-1 py-0.5 bg-white/20 rounded text-black font-mono">Ctrl+F</kbd> Return to Timer mode</p>
                 <p><kbd className="px-1 py-0.5 bg-white/20 rounded text-black font-mono">M</kbd> Toggle map overlay</p>
-                <p><kbd className="px-1 py-0.5 bg-white/20 rounded text-black font-mono">Esc</kbd> Release cursor</p>
+                {/* Removed Esc key instruction */}
                 <p><kbd className="px-1 py-0.5 bg-white/20 rounded text-black font-mono">Ctrl+K</kbd> Command palette</p>
               </div>
               <div className="mt-3 pt-2 border-t border-white/20 text-xs text-gray-300">
-                💡 Complete focus sessions to grow trees!
+                <div>🌱 Sessions start as seeds</div>
+                <div>🌿 Grow to bushes at 50% progress</div>
+                <div>🌳 Become trees when completed!</div>
               </div>
             </motion.div>
           )}
@@ -223,13 +200,10 @@ export function ForestExploration({ className }: ForestExplorationProps) {
         {/* 3D Scene */}
         <KeyboardControls map={keyboardMap}>
           <Canvas
-            ref={canvasRef}
             shadows
             camera={{ position: [3, 3, 3], near: 0.1, fov: 40 }}
-            onClick={handleCanvasClick}
             style={{
               touchAction: "none",
-              cursor: 'none', // Hide cursor when in forest mode
             }}
           >
             <color attach="background" args={["#ececec"]} />

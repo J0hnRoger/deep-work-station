@@ -23,8 +23,14 @@ const TREE_MODELS = {
   bush: '/models/trees/bush.glb'
 } as const;
 
+// Preload evolution stage models to ensure smooth transitions
+useGLTF.preload(TREE_MODELS.seed);
+useGLTF.preload(TREE_MODELS.bush);
+
 export const Tree = ({ tree, debugMode = false, showSessionInfo = false, ...props }: TreeProps) => {
   const [hovered, setHovered] = useState(false);
+  const [lastStage, setLastStage] = useState(tree.evolutionStage);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   
   // Select model based on evolution stage
   const getModelPath = () => {
@@ -40,6 +46,20 @@ export const Tree = ({ tree, debugMode = false, showSessionInfo = false, ...prop
   const { scene } = useGLTF(modelPath) as any;
   const group = useRef<any>(null);
   const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene]);
+  
+  // Handle evolution stage transitions with visual feedback
+  useEffect(() => {
+    if (tree.evolutionStage !== lastStage) {
+      console.log(`🌱 Tree evolution: ${lastStage} → ${tree.evolutionStage} (Session: ${tree.sessionId})`);
+      setIsTransitioning(true);
+      
+      // Brief transition animation
+      setTimeout(() => {
+        setIsTransitioning(false);
+        setLastStage(tree.evolutionStage);
+      }, 300);
+    }
+  }, [tree.evolutionStage, lastStage, tree.sessionId]);
 
   // Configuration des ombres pour les arbres
   useEffect(() => {
@@ -61,10 +81,16 @@ export const Tree = ({ tree, debugMode = false, showSessionInfo = false, ...prop
     });
   }, [scene, tree.health]);
 
+  // Add scale animation for transitions and breathing effect for active trees
+  const isActive = !tree.completed && tree.sessionProgress !== undefined;
+  const scaleMultiplier = isTransitioning ? 1.1 : 1.0;
+  const breathingScale = isActive ? 1 + Math.sin(Date.now() * 0.002) * 0.02 : 1;
+  const finalScale = tree.scale * scaleMultiplier * breathingScale;
+  
   return (
     <group 
       position={[tree.position.x, tree.position.y - 0.5, tree.position.z]} 
-      scale={tree.scale}
+      scale={finalScale}
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
     >
@@ -83,8 +109,11 @@ export const Tree = ({ tree, debugMode = false, showSessionInfo = false, ...prop
               {tree.evolutionStage === 'bush' && <span>🌿</span>}
               {tree.evolutionStage === 'tree' && <span>🌳</span>}
               <span className="capitalize">{tree.evolutionStage}</span>
-              {tree.sessionProgress && (
+              {tree.sessionProgress !== undefined && (
                 <span className="text-blue-400">({Math.round(tree.sessionProgress * 100)}%)</span>
+              )}
+              {isTransitioning && (
+                <span className="text-green-400 animate-pulse">✨ Growing!</span>
               )}
             </div>
             {tree.completed ? (

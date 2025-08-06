@@ -37,7 +37,11 @@ const initialState = {
   autoPauseOnTimerPause: true,
   autoStopOnTimerComplete: false,
   focusPlaylistId: null,
-  breakPlaylistId: null
+  breakPlaylistId: null,
+  
+  // Timer-specific loop behavior
+  loopDuringTimer: true, // Loop audio during timer by default
+  originalRepeatMode: null
 }
 
 export const createAudioSlice: StateCreator<AppStore, [], [], AudioSlice> = (set, get) => ({
@@ -88,6 +92,13 @@ export const createAudioSlice: StateCreator<AppStore, [], [], AudioSlice> = (set
     const state = get()
     if (!state.currentPlaylist || !state.currentTrack) return
     
+    // Stop current playback to avoid double audio
+    const wasPlaying = state.isPlaying
+    if (wasPlaying) {
+      console.log('Audio: Stopping playback for track change (next)')
+      set({ isPlaying: false, isPaused: false })
+    }
+    
     const currentIndex = state.currentPlaylist.tracks.findIndex(
       track => track.id === state.currentTrack?.id
     )
@@ -101,7 +112,14 @@ export const createAudioSlice: StateCreator<AppStore, [], [], AudioSlice> = (set
     
     if (nextIndex !== null) {
       const nextTrack = state.currentPlaylist.tracks[nextIndex]
-      set({ currentTrack: nextTrack, currentTime: 0 })
+      console.log('Audio: Changing to next track:', nextTrack.title, wasPlaying ? '(auto-resume)' : '(stopped)')
+      set({ 
+        currentTrack: nextTrack, 
+        currentTime: 0,
+        // Resume playback if it was playing before
+        isPlaying: wasPlaying,
+        isPaused: false
+      })
       
       // Dispatch event
       get().dispatchGlobalEvent({
@@ -117,6 +135,13 @@ export const createAudioSlice: StateCreator<AppStore, [], [], AudioSlice> = (set
     const state = get()
     if (!state.currentPlaylist || !state.currentTrack) return
     
+    // Stop current playback to avoid double audio
+    const wasPlaying = state.isPlaying
+    if (wasPlaying) {
+      console.log('Audio: Stopping playback for track change (previous)')
+      set({ isPlaying: false, isPaused: false })
+    }
+    
     const currentIndex = state.currentPlaylist.tracks.findIndex(
       track => track.id === state.currentTrack?.id
     )
@@ -129,7 +154,14 @@ export const createAudioSlice: StateCreator<AppStore, [], [], AudioSlice> = (set
     
     if (prevIndex !== null) {
       const prevTrack = state.currentPlaylist.tracks[prevIndex]
-      set({ currentTrack: prevTrack, currentTime: 0 })
+      console.log('Audio: Changing to previous track:', prevTrack.title, wasPlaying ? '(auto-resume)' : '(stopped)')
+      set({ 
+        currentTrack: prevTrack, 
+        currentTime: 0,
+        // Resume playback if it was playing before
+        isPlaying: wasPlaying,
+        isPaused: false
+      })
       
       // Dispatch event
       get().dispatchGlobalEvent({
@@ -158,10 +190,21 @@ export const createAudioSlice: StateCreator<AppStore, [], [], AudioSlice> = (set
   },
   
   setCurrentPlaylist: (playlist) => {
+    const state = get()
+    
+    // Stop current playback to avoid double audio when switching playlists
+    const wasPlaying = state.isPlaying
+    if (wasPlaying) {
+      set({ isPlaying: false, isPaused: false })
+    }
+    
     set({ 
       currentPlaylist: playlist,
       currentTrack: playlist.tracks[0] || null,
-      currentTime: 0
+      currentTime: 0,
+      // Resume playback if it was playing before
+      isPlaying: wasPlaying && playlist.tracks.length > 0,
+      isPaused: false
     })
     
     // Dispatch event
@@ -190,7 +233,21 @@ export const createAudioSlice: StateCreator<AppStore, [], [], AudioSlice> = (set
   },
   
   setCurrentTrack: (track) => {
-    set({ currentTrack: track, currentTime: 0 })
+    const state = get()
+    
+    // Stop current playback to avoid double audio when manually changing tracks
+    const wasPlaying = state.isPlaying
+    if (wasPlaying) {
+      set({ isPlaying: false, isPaused: false })
+    }
+    
+    set({ 
+      currentTrack: track, 
+      currentTime: 0,
+      // Resume playback if it was playing before
+      isPlaying: wasPlaying && track !== null,
+      isPaused: false
+    })
   },
   
   updateCurrentTime: (time) => {
@@ -241,12 +298,73 @@ export const createAudioSlice: StateCreator<AppStore, [], [], AudioSlice> = (set
     set({ breakPlaylistId: playlistId })
   },
   
+  setLoopDuringTimer: (enabled) => {
+    set({ loopDuringTimer: enabled })
+  },
+  
+  enableTimerLoop: () => {
+    const state = get()
+    if (state.loopDuringTimer) {
+      // Save current repeat mode and switch to 'all' for looping
+      set({ 
+        originalRepeatMode: state.repeatMode,
+        repeatMode: 'all' 
+      })
+      console.log('Audio: Timer loop enabled (repeatMode: all)')
+    }
+  },
+  
+  disableTimerLoop: () => {
+    const state = get()
+    if (state.originalRepeatMode !== null) {
+      // Restore original repeat mode
+      set({ 
+        repeatMode: state.originalRepeatMode,
+        originalRepeatMode: null 
+      })
+      console.log('Audio: Timer loop disabled, restored repeatMode:', state.originalRepeatMode)
+    }
+  },
+  
   setLoading: (loading) => {
     set({ isLoading: loading })
   },
   
   setError: (error) => {
     set({ error, isLoading: false })
+  },
+  
+  // Handle track end during timer - automatically loop or go to next
+  onTrackEnd: () => {
+    const state = get()
+    
+    // Check if we should handle track end differently during timer
+    const isTimerActive = state.isRunning && !state.isPaused && !state.isBreak
+    
+    if (isTimerActive && state.loopDuringTimer) {
+      // During timer with loop enabled: ensure continuous playback
+      if (state.repeatMode === 'one') {
+        // Replay current track
+        set({ currentTime: 0 })
+        // Note: Actual replay would be handled by audio component
+      } else if (state.repeatMode === 'all' && state.currentPlaylist) {
+        // Go to next track (will loop back to start if at end)
+        get().next()
+      } else {
+        // Fallback: replay current track to maintain focus
+        set({ currentTime: 0 })
+      }
+    } else {
+      // Normal behavior: respect user's repeat mode
+      if (state.repeatMode === 'one') {
+        set({ currentTime: 0 })
+      } else if (state.repeatMode === 'all') {
+        get().next()
+      } else {
+        // Stop playback
+        get().stop()
+      }
+    }
   }
 })
 
@@ -264,25 +382,59 @@ export function subscribeAudioSystem(
   
   // Réagir aux événements timer
   if (latestEvent.type === 'timer_started') {
-    if (state.autoPlayOnTimerStart && state.focusPlaylistId) {
-      const focusPlaylist = state.playlists.find(p => p.id === state.focusPlaylistId)
-      if (focusPlaylist) {
-        state.setCurrentPlaylist(focusPlaylist)
+    console.log('Audio: Timer started, enabling audio loop mode')
+    
+    // Enable loop mode for continuous focus music
+    state.enableTimerLoop()
+    
+    // Auto-play audio when timer starts (only if audio is available and not already playing)
+    if (state.autoPlayOnTimerStart && !state.isPlaying) {
+      // Try focus playlist first, then current track
+      if (state.focusPlaylistId) {
+        const focusPlaylist = state.playlists.find(p => p.id === state.focusPlaylistId)
+        if (focusPlaylist && focusPlaylist.tracks.length > 0) {
+          console.log('Audio: Auto-starting focus playlist:', focusPlaylist.name)
+          state.setCurrentPlaylist(focusPlaylist)
+          state.play()
+        } else {
+          console.log('Audio: Focus playlist not found or empty')
+        }
+      } else if (state.currentTrack) {
+        console.log('Audio: Auto-starting current track:', state.currentTrack.title)
         state.play()
+      } else {
+        console.log('Audio: No audio configured, nothing to auto-start')
       }
+    } else if (state.isPlaying) {
+      console.log('Audio: Audio already playing, keeping current playback')
+    } else {
+      console.log('Audio: Auto-play disabled or no audio available')
     }
   }
   
   // NOTE: Timer pause/resume events are no longer dispatched since timer logic is internal
   // Audio pause/resume should be handled via UI controls or settings, not automatic sync
   
-  if (latestEvent.type === 'timer_completed') {
+  // Handle both old timer_completed and new timer_end events
+  if (latestEvent.type === 'timer_completed' || latestEvent.type === 'timer_end') {
+    console.log('Audio: Timer ended, disabling audio loop mode')
+    
+    // Disable loop mode and restore original repeat mode
+    state.disableTimerLoop()
+    
+    // Stop audio if configured
     if (state.autoStopOnTimerComplete) {
       state.stop()
     }
   }
   
   if (latestEvent.type === 'break_started') {
+    console.log('Audio: Break started, temporarily disabling timer loop')
+    
+    // Temporarily restore normal repeat mode during breaks
+    state.disableTimerLoop()
+    
+    // Switch to break playlist if configured
     if (state.breakPlaylistId) {
       const breakPlaylist = state.playlists.find(p => p.id === state.breakPlaylistId)
       if (breakPlaylist) {

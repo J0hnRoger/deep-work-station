@@ -1,14 +1,23 @@
 // =============================================================================
-// HOWLER AUDIO HOOK - Façade vers useAppStore
+// HOWLER AUDIO HOOK - Façade vers useAppStore avec Lazy Loading
 // =============================================================================
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { Howl, Howler } from 'howler'
 import { useAppStore } from '@/store/useAppStore'
+
+// Audio pool management to prevent "HTML5 Audio pool exhausted"
+const audioPool = new Map<string, Howl>()
+const loadingTracks = new Map<string, Promise<Howl>>()
+const DEBOUNCE_DELAY = 500 // Reduced to 500ms for better responsiveness
+const MAX_POOL_SIZE = 5 // Maximum number of loaded tracks in memory
 
 export const useHowlerAudio = () => {
   const howlRef = useRef<Howl | null>(null)
   const updateIntervalRef = useRef<number | null>(null)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [isReady, setIsReady] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
   
   // Sélecteurs du store unifié
   const isPlaying = useAppStore(state => state.isPlaying)
@@ -48,94 +57,170 @@ export const useHowlerAudio = () => {
     }, 1000) as unknown as number
   }, [updateCurrentTime])
   
+  // Audio pool management
+  const cleanupAudioPool = useCallback(() => {
+    if (audioPool.size > MAX_POOL_SIZE) {
+      // Remove oldest tracks (excluding current)
+      const currentTrackId = currentTrack?.id
+      const tracksToRemove = Array.from(audioPool.keys())
+        .filter(id => id !== currentTrackId)
+        .slice(0, audioPool.size - MAX_POOL_SIZE)
+      
+      tracksToRemove.forEach(trackId => {
+        const howl = audioPool.get(trackId)
+        if (howl) {
+          console.log(`Cleaning up audio track: ${trackId}`)
+          howl.stop()
+          howl.unload()
+          audioPool.delete(trackId)
+        }
+      })
+    }
+  }, [currentTrack?.id])
+  
+  // Lazy load track with debouncing
+  const loadTrackLazy = useCallback(async (track: any): Promise<Howl> => {
+    const trackId = track.id
+    
+    // Check if already loading
+    if (loadingTracks.has(trackId)) {
+      console.log(`Track already loading: ${track.title}`)
+      return loadingTracks.get(trackId)!
+    }
+    
+    // Check if already loaded
+    if (audioPool.has(trackId)) {
+      console.log(`Track already loaded: ${track.title}`)
+      const howl = audioPool.get(trackId)!
+      setIsReady(true)
+      setIsLoaded(howl.state() === 'loaded')
+      return howl
+    }
+    
+    // Create loading promise
+    const loadPromise = new Promise<Howl>((resolve, reject) => {
+      console.log(`Loading track with Howler (lazy): ${track.title}`)
+      
+      const howl = new Howl({
+        src: [track.url],
+        html5: true, // Use HTML5 Audio for streaming
+        preload: true,
+        volume: volume / 100,
+        
+        onload: () => {
+          console.log('Track loaded successfully:', track.title)
+          setDuration(howl.duration())
+          setLoading(false)
+          setIsReady(true)
+          setIsLoaded(true)
+          resolve(howl)
+        },
+        
+        onloaderror: (_, error) => {
+          console.error('Error loading track:', error)
+          setError(`Failed to load track: ${track.title}`)
+          setLoading(false)
+          setIsReady(false)
+          setIsLoaded(false)
+          loadingTracks.delete(trackId)
+          reject(error)
+        },
+        
+        onplay: () => {
+          console.log('Track started playing:', track.title)
+          startProgressUpdates()
+        },
+        
+        onpause: () => {
+          console.log('Track paused')
+          stopProgressUpdates()
+        },
+        
+        onstop: () => {
+          console.log('Track stopped')
+          stopProgressUpdates()
+          updateCurrentTime(0)
+        },
+        
+        onend: () => {
+          console.log('Track ended, playing next')
+          stopProgressUpdates()
+          next() // Auto-advance to next track
+        },
+        
+        onplayerror: (_, error) => {
+          console.error('Playback error:', error)
+          setError('Playback failed')
+          
+          // Retry once with HTML5 audio
+          howl.once('unlock', () => {
+            howl.play()
+          })
+        }
+      })
+      
+      // Add to pool
+      audioPool.set(trackId, howl)
+      cleanupAudioPool()
+    })
+    
+    loadingTracks.set(trackId, loadPromise)
+    
+    // Clean up loading promise after completion
+    loadPromise.finally(() => {
+      loadingTracks.delete(trackId)
+    })
+    
+    return loadPromise
+  }, [volume, setDuration, setLoading, setError, next, startProgressUpdates, stopProgressUpdates, cleanupAudioPool])
+  
   // Set global volume
   useEffect(() => {
     Howler.volume(volume / 100)
   }, [volume])
   
-  // Load new track
+  // Lazy load new track with debouncing
   useEffect(() => {
     if (!currentTrack) {
       if (howlRef.current) {
         howlRef.current.stop()
-        howlRef.current.unload()
         howlRef.current = null
       }
+      setIsReady(false)
+      setIsLoaded(false)
       return
     }
     
-    console.log('Loading track with Howler:', currentTrack.title)
+    // Clear previous debounce timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+    
+    // Set loading state immediately
     setLoading(true)
     setError(null)
+    setIsReady(false)
+    setIsLoaded(false)
     
-    // Stop and unload previous track
-    if (howlRef.current) {
-      howlRef.current.stop()
-      howlRef.current.unload()
-    }
-    
-    // Create new Howl instance
-    const howl = new Howl({
-      src: [currentTrack.url],
-      html5: true, // Use HTML5 Audio for streaming
-      preload: true,
-      volume: volume / 100,
-      
-      onload: () => {
-        console.log('Track loaded successfully:', currentTrack.title)
-        setDuration(howl.duration())
+    // Debounced loading
+    debounceTimeoutRef.current = setTimeout(async () => {
+      try {
+        const howl = await loadTrackLazy(currentTrack)
+        howlRef.current = howl
+      } catch (error) {
+        console.error('Failed to load track:', error)
         setLoading(false)
-      },
-      
-      onloaderror: (_, error) => {
-        console.error('Error loading track:', error)
-        setError(`Failed to load track: ${currentTrack.title}`)
-        setLoading(false)
-      },
-      
-      onplay: () => {
-        console.log('Track started playing:', currentTrack.title)
-        startProgressUpdates()
-      },
-      
-      onpause: () => {
-        console.log('Track paused')
-        stopProgressUpdates()
-      },
-      
-      onstop: () => {
-        console.log('Track stopped')
-        stopProgressUpdates()
-        updateCurrentTime(0)
-      },
-      
-      onend: () => {
-        console.log('Track ended, playing next')
-        stopProgressUpdates()
-        next() // Auto-advance to next track
-      },
-      
-      onplayerror: (_, error) => {
-        console.error('Playback error:', error)
-        setError('Playback failed')
-        
-        // Retry once with HTML5 audio
-        howl.once('unlock', () => {
-          howl.play()
-        })
+        setIsReady(false)
+        setIsLoaded(false)
       }
-    })
-    
-    howlRef.current = howl
+    }, DEBOUNCE_DELAY)
     
     return () => {
-      stopProgressUpdates()
-      if (howl) {
-        howl.stop()
-        howl.unload()
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
       }
     }
-  }, [currentTrack, volume, setDuration, setLoading, setError, next, startProgressUpdates, stopProgressUpdates])
+  }, [currentTrack, loadTrackLazy, setLoading, setError])
   
   // Handle play/pause state changes
   useEffect(() => {
@@ -175,7 +260,10 @@ export const useHowlerAudio = () => {
       stopProgressUpdates()
       if (howlRef.current) {
         howlRef.current.stop()
-        howlRef.current.unload()
+        howlRef.current = null
+      }
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
       }
     }
   }, [stopProgressUpdates])
@@ -203,9 +291,6 @@ export const useHowlerAudio = () => {
     const adjustedVolume = Math.min(1, (volume / 100) * volumeMultiplier)
     howlRef.current.volume(adjustedVolume)
   }, [eqPreset, volume])
-  
-  const isReady = !!howlRef.current
-  const isLoaded = howlRef.current?.state() === 'loaded'
   
   return {
     isReady,

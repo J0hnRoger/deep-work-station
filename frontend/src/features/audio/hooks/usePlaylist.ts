@@ -13,6 +13,7 @@ export const usePlaylist = () => {
   const setPlaylists = useAppStore(state => state.setPlaylists)
   const setCurrentPlaylist = useAppStore(state => state.setCurrentPlaylist)
   const currentPlaylist = useAppStore(state => state.currentPlaylist)
+  const playlists = useAppStore(state => state.playlists)
   
   // Fetch playlists from Azure Blob Storage
   const {
@@ -32,7 +33,11 @@ export const usePlaylist = () => {
   useEffect(() => {
     console.log('usePlaylist effect triggered:', { 
       hasPlaylistFolders: !!playlistFolders, 
-      count: playlistFolders?.length || 0 
+      count: playlistFolders?.length || 0,
+      isLoading,
+      error: error?.message,
+      existingPlaylistsCount: playlists.length,
+      hasCurrentPlaylist: !!currentPlaylist
     })
     
     if (!playlistFolders || playlistFolders.length === 0) {
@@ -78,16 +83,43 @@ export const usePlaylist = () => {
     
     // Set default playlist if none selected
     if (convertedPlaylists.length > 0 && !currentPlaylist) {
-      const defaultPlaylist = convertedPlaylists.find(p => 
+      // Try to find a playlist with "deep" or "focus" in the name
+      const focusPlaylist = convertedPlaylists.find(p => 
         p.name.toLowerCase().includes('deep') || 
-        p.name.toLowerCase().includes('focus')
-      ) || convertedPlaylists[0]
+        p.name.toLowerCase().includes('focus') ||
+        p.name.toLowerCase().includes('work') ||
+        p.name.toLowerCase().includes('study')
+      )
+      
+      // If no focus playlist found, use the first one
+      const defaultPlaylist = focusPlaylist || convertedPlaylists[0]
       
       setCurrentPlaylist(defaultPlaylist)
       console.log(`Set default playlist: ${defaultPlaylist.name}`)
     }
     
-  }, [playlistFolders, setPlaylists, setCurrentPlaylist, currentPlaylist])
+  }, [playlistFolders, setPlaylists, setCurrentPlaylist, currentPlaylist, playlists.length])
+  
+  // Ensure current playlist is set if we have playlists but no current playlist
+  useEffect(() => {
+    if (playlists.length > 0 && !currentPlaylist) {
+      console.log('No current playlist selected, setting default from existing playlists')
+      
+      // Try to find a playlist with "deep" or "focus" in the name
+      const focusPlaylist = playlists.find(p => 
+        p.name.toLowerCase().includes('deep') || 
+        p.name.toLowerCase().includes('focus') ||
+        p.name.toLowerCase().includes('work') ||
+        p.name.toLowerCase().includes('study')
+      )
+      
+      // If no focus playlist found, use the first one
+      const defaultPlaylist = focusPlaylist || playlists[0]
+      
+      setCurrentPlaylist(defaultPlaylist)
+      console.log(`Set default playlist from existing: ${defaultPlaylist.name}`)
+    }
+  }, [playlists, currentPlaylist, setCurrentPlaylist])
   
   // Format track title from filename
   const formatTrackTitle = (filename: string): string => {
@@ -124,6 +156,6 @@ export const usePlaylist = () => {
     error,
     refetch,
     testConnection,
-    hasPlaylists: (playlistFolders?.length || 0) > 0
+    hasPlaylists: (playlistFolders?.length || 0) > 0 || playlists.length > 0
   }
 }

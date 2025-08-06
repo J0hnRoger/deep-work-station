@@ -31,7 +31,7 @@ const initialState = {
   
   // Settings
   trackBreaks: false,
-  minSessionDuration: 300, // 5 minutes minimum
+  minSessionDuration: SessionTrackingDomain.MIN_SESSION_DURATION, // 20 minutes default
   autoSaveStats: true
 }
 
@@ -41,6 +41,13 @@ export const createSessionTrackingSlice: StateCreator<AppStore, [], [], SessionT
   // Session Tracking Actions
   addSession: (session) => {
     const state = get()
+    
+    // Valider la session avant de l'ajouter
+    if (!SessionTrackingDomain.isValidSession(session)) {
+      console.warn('Session validation failed, not adding to tracking:', session)
+      return
+    }
+    
     const newSessions = [...state.sessions, session]
     
     set({
@@ -53,8 +60,8 @@ export const createSessionTrackingSlice: StateCreator<AppStore, [], [], SessionT
     get().refreshTodayStats()
     get().refreshCurrentWeekStats()
     
-          // Update streaks - will be implemented later
-      // get().updateStreaks()
+    // Update streaks - will be implemented later
+    // get().updateStreaks()
     
     // Dispatch event
     get().dispatchGlobalEvent({
@@ -78,6 +85,12 @@ export const createSessionTrackingSlice: StateCreator<AppStore, [], [], SessionT
       const updatedSessions = [...state.sessions]
       const oldSession = updatedSessions[sessionIndex]
       const newSession = { ...oldSession, ...updates }
+      
+      // Valider la session mise à jour
+      if (!SessionTrackingDomain.isValidSession(newSession)) {
+        console.warn('Updated session validation failed:', newSession)
+        return
+      }
       
       updatedSessions[sessionIndex] = newSession
       
@@ -156,7 +169,7 @@ export const createSessionTrackingSlice: StateCreator<AppStore, [], [], SessionT
   refreshAllStats: () => {
     get().refreshTodayStats()
     get().refreshCurrentWeekStats()
-          // get().updateStreaks()
+    // get().updateStreaks()
   },
   
   setDailyGoal: (minutes) => {
@@ -176,7 +189,9 @@ export const createSessionTrackingSlice: StateCreator<AppStore, [], [], SessionT
   },
   
   setMinSessionDuration: (seconds) => {
-    set({ minSessionDuration: Math.max(0, seconds) })
+    // S'assurer que la durée minimum ne peut pas être inférieure à 20 minutes
+    const minDuration = Math.max(SessionTrackingDomain.MIN_SESSION_DURATION, seconds)
+    set({ minSessionDuration: minDuration })
   },
   
   setAutoSaveStats: (enabled) => {
@@ -234,8 +249,15 @@ export const createSessionTrackingSlice: StateCreator<AppStore, [], [], SessionT
       const parsed = JSON.parse(data)
       
       if (parsed.version && parsed.sessions) {
+        // Filtrer les sessions invalides lors de l'import
+        const validSessions = SessionTrackingDomain.filterValidSessions(parsed.sessions || [])
+        
+        if (validSessions.length !== (parsed.sessions?.length || 0)) {
+          console.warn(`Imported ${parsed.sessions?.length || 0} sessions, but only ${validSessions.length} were valid`)
+        }
+        
         set({
-          sessions: parsed.sessions || [],
+          sessions: validSessions,
           dailyStats: parsed.dailyStats || {},
           weeklyStats: parsed.weeklyStats || {},
           dailyGoalMinutes: parsed.goals?.dailyGoalMinutes || 240,
@@ -253,7 +275,7 @@ export const createSessionTrackingSlice: StateCreator<AppStore, [], [], SessionT
         // Dispatch event
         get().dispatchGlobalEvent({
           type: 'data_imported',
-          payload: { sessionCount: parsed.sessions?.length || 0 },
+          payload: { sessionCount: validSessions.length },
           timestamp: Date.now(),
           id: `data_import_${Date.now()}`
         })

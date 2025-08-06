@@ -151,6 +151,8 @@ export const useAppStore = create<AppStore>()(
             shuffleMode: state.shuffleMode,
             repeatMode: state.repeatMode,
             playlists: state.playlists,
+            currentPlaylist: state.currentPlaylist,
+            currentTrack: state.currentTrack,
             autoPlayOnTimerStart: state.autoPlayOnTimerStart,
             autoPauseOnTimerPause: state.autoPauseOnTimerPause,
             autoStopOnTimerComplete: state.autoStopOnTimerComplete,

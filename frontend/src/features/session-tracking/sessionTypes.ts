@@ -59,12 +59,16 @@ export interface SessionTrackingState {
   
   // Settings
   trackBreaks: boolean
-  minSessionDuration: number // secondes minimum pour compter
+  minSessionDuration: number // secondes minimum pour compter (20 min = 1200s)
   autoSaveStats: boolean
 }
 
 // Session Tracking Domain Logic
 export class SessionTrackingDomain {
+  // Constants
+  static readonly MIN_SESSION_DURATION = 20 * 60 // 20 minutes in seconds
+  static readonly MIN_SESSION_DURATION_MINUTES = 20
+  
   static getCurrentDateString(): string {
     return new Date().toISOString().split('T')[0]
   }
@@ -83,8 +87,45 @@ export class SessionTrackingDomain {
     return endDate.toISOString().split('T')[0]
   }
   
+  // Session validation
+  static isValidSession(session: TrackedSession): boolean {
+    // Vérifier la durée minimum (20 minutes)
+    if (session.duration < this.MIN_SESSION_DURATION) {
+      console.log(`Session ${session.id} rejected: duration ${session.duration}s < minimum ${this.MIN_SESSION_DURATION}s`)
+      return false
+    }
+    
+    // Vérifier que la session a une durée positive
+    if (session.duration <= 0) {
+      console.log(`Session ${session.id} rejected: invalid duration ${session.duration}s`)
+      return false
+    }
+    
+    // Vérifier que les timestamps sont cohérents
+    if (session.endTime <= session.startTime) {
+      console.log(`Session ${session.id} rejected: invalid timestamps start=${session.startTime}, end=${session.endTime}`)
+      return false
+    }
+    
+    // Vérifier que la durée calculée correspond à la durée déclarée (tolérance de 5 secondes)
+    const calculatedDuration = session.endTime - session.startTime
+    if (Math.abs(calculatedDuration - session.duration) > 5) {
+      console.log(`Session ${session.id} rejected: duration mismatch calculated=${calculatedDuration}s, declared=${session.duration}s`)
+      return false
+    }
+    
+    return true
+  }
+  
+  // Filter valid sessions only
+  static filterValidSessions(sessions: TrackedSession[]): TrackedSession[] {
+    return sessions.filter(session => this.isValidSession(session))
+  }
+  
   static calculateDayStats(sessions: TrackedSession[], date: string): DayStats {
-    const daySessions = sessions.filter(s => s.date === date)
+    // Filtrer les sessions valides uniquement
+    const validSessions = this.filterValidSessions(sessions)
+    const daySessions = validSessions.filter(s => s.date === date)
     const completedSessions = daySessions.filter(s => s.completed)
     
     const totalTime = daySessions.reduce((sum, s) => sum + s.duration, 0)
@@ -106,7 +147,9 @@ export class SessionTrackingDomain {
   
   static calculateWeekStats(sessions: TrackedSession[], weekStart: string): WeekStats {
     const weekEnd = this.getWeekEndDate(weekStart)
-    const weekSessions = sessions.filter(s => s.date >= weekStart && s.date <= weekEnd)
+    // Filtrer les sessions valides uniquement
+    const validSessions = this.filterValidSessions(sessions)
+    const weekSessions = validSessions.filter(s => s.date >= weekStart && s.date <= weekEnd)
     
     // Générer stats quotidiennes pour la semaine
     const dailyStats: DayStats[] = []
@@ -178,6 +221,11 @@ export class SessionTrackingDomain {
   static calculateCompletionPercentage(actual: number, goal: number): number {
     if (goal === 0) return 0
     return Math.min(100, (actual / goal) * 100)
+  }
+  
+  // Helper pour vérifier si une session est éligible pour créer un arbre
+  static isSessionEligibleForTree(session: TrackedSession): boolean {
+    return session.completed && this.isValidSession(session)
   }
 }
 

@@ -18,6 +18,7 @@ export function AudioPlayer({ className }: AudioPlayerProps) {
   const volume = useAppStore(state => state.volume)
   const eqPreset = useAppStore(state => state.eqPreset)
   const isLoading = useAppStore(state => state.isLoading)
+  const currentPlaylist = useAppStore(state => state.currentPlaylist)
   
   const play = useAppStore(state => state.play)
   const pause = useAppStore(state => state.pause)
@@ -27,12 +28,6 @@ export function AudioPlayer({ className }: AudioPlayerProps) {
   const setEQPreset = useAppStore(state => state.setEQPreset)
   
   const { isReady, isLoaded, handleSeek, formatTime } = useHowlerAudio()
-  
-  // Debug: uncomment to troubleshoot re-renders
-  // console.log('AudioPlayer render:', { 
-  //   hasCurrentTrack: !!currentTrack,
-  //   trackCount: currentPlaylist?.tracks.length || 0
-  // })
   
   const handlePlayPause = () => {
     if (isPlaying) {
@@ -99,7 +94,7 @@ export function AudioPlayer({ className }: AudioPlayerProps) {
           max={duration || 100}
           step={1}
           className="w-full"
-          disabled={!isReady || !isLoaded || isLoading}
+          disabled={!isReady || !isLoaded}
         />
       </div>
       
